@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import './App.css'
 import BellAnimation from './BellAnimation.jsx'
+import DineInPaymentPage from './DineInPaymentPage.jsx'
 
 const dishes = [
   { id: 1, name: 'Paneer Tikka', category: 'Starters', price: 220, oldPrice: 260, off: '15% OFF', veg: true, popular: true, description: 'Marinated cottage cheese grilled to perfection.', image: 'photo-1567188040759-fb8a883dc6d8' },
@@ -153,7 +154,7 @@ function MenuFilterPanel({ draft, setDraft, clear, apply }) {
 }
 
 function StatusBadge({ status }) {
-  const Icon = status === 'Preparing' ? Clock3 : status === 'Delivered' ? Truck : status === 'Cancelled' ? CircleX : CheckCircle2
+  const Icon = status === 'Preparing' ? Clock3 : status === 'Placed' ? PackageCheck : status === 'Delivered' ? Truck : status === 'Cancelled' ? CircleX : CheckCircle2
   return <span className={`status-badge status-${status.toLowerCase()}`}><Icon size={15} />{status}{status === 'Preparing' && <small>Order sent to kitchen</small>}</span>
 }
 
@@ -180,6 +181,7 @@ function App() {
   const [page, setPage] = useState('menu')
   const [orderQuery, setOrderQuery] = useState('')
   const [orderTypeFilter, setOrderTypeFilter] = useState('All')
+  const [placedOrders, setPlacedOrders] = useState([])
   const [statusFilter, setStatusFilter] = useState('All Status')
   const [ordersPage, setOrdersPage] = useState(1)
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -202,7 +204,16 @@ function App() {
   const [supportTopic, setSupportTopic] = useState('General support')
   const [supportFeedback, setSupportFeedback] = useState('')
   const supportFormRef = useRef(null)
-  const qrTableId = new URLSearchParams(window.location.search).get('table') || window.sessionStorage.getItem('tableId') || ''
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('online')
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
+  const [paymentSession, setPaymentSession] = useState(null)
+  const [placedOrder, setPlacedOrder] = useState(null)
+  const checkoutRequestLock = useRef(false)
+  const checkoutRequestKey = useRef(null)
+  const qrParams = new URLSearchParams(window.location.search)
+  const qrTableId = qrParams.get('table') || qrParams.get('tableNo') || window.sessionStorage.getItem('tableId') || window.sessionStorage.getItem('tableNo') || ''
+  const checkoutTableNumber = qrTableId || '5'
   const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'hello@tastybites.example'
 
   const submitSupportMessage = (event) => {
@@ -338,26 +349,35 @@ function App() {
     })
   }, [offerFilter, offersSearch, offersSort, offerFacetFilters])
 
-  const filteredOrders = useMemo(() => sampleOrders.filter((order) => {
-    const matchesQuery = `${order.id} ${order.place} ${order.items.map((id) => dishes.find((dish) => dish.id === id)?.name).join(' ')}`.toLowerCase().includes(orderQuery.toLowerCase())
+  const allOrders = [...placedOrders, ...sampleOrders]
+  const filteredOrders = useMemo(() => allOrders.filter((order) => {
+    const matchesQuery = `${order.id} ${order.place} ${order.items.map((id) => cartProducts.find((dish) => dish.id === id)?.name).join(' ')}`.toLowerCase().includes(orderQuery.toLowerCase())
     const matchesType = orderTypeFilter === 'All' || (orderTypeFilter === 'Delivery' ? order.type === 'Home Delivery' : order.type === orderTypeFilter)
     const matchesStatus = statusFilter === 'All Status' || order.status === statusFilter
     const matchesDate = dateRange !== 'Last 7 days' || new Date(order.date).getTime() >= new Date('23 Oct 2026').getTime()
     return matchesQuery && matchesType && matchesStatus && matchesDate
-  }), [orderQuery, orderTypeFilter, statusFilter, dateRange])
+  }), [placedOrders, orderQuery, orderTypeFilter, statusFilter, dateRange])
   const pageOrders = filteredOrders.slice((ordersPage - 1) * 10, ordersPage * 10)
   const orderCounts = {
-    total: sampleOrders.length,
-    completed: sampleOrders.filter((order) => order.status === 'Completed').length,
-    delivered: sampleOrders.filter((order) => order.status === 'Delivered').length,
-    cancelled: sampleOrders.filter((order) => order.status === 'Cancelled').length,
-    dineIn: sampleOrders.filter((order) => order.type === 'Dine-in').length,
-    delivery: sampleOrders.filter((order) => order.type === 'Home Delivery').length,
+    total: allOrders.length,
+    completed: allOrders.filter((order) => order.status === 'Completed').length,
+    delivered: allOrders.filter((order) => order.status === 'Delivered').length,
+    cancelled: allOrders.filter((order) => order.status === 'Cancelled').length,
+    dineIn: allOrders.filter((order) => order.type === 'Dine-in').length,
+    delivery: allOrders.filter((order) => order.type === 'Home Delivery').length,
   }
 
   const placeOrder = () => {
     if (!itemCount) {
       setNotice('Add a dish to your cart to get started.')
+      return
+    }
+    if (orderType === 'Dine-in') {
+      checkoutRequestKey.current = null
+      setCheckoutError('')
+      setSelectedPaymentMethod('online')
+      setPage('payment')
+      setCartOpen(false)
       return
     }
     setNotice(`Order placed for ${itemCount} ${itemCount === 1 ? 'item' : 'items'} · ${orderType}`)
@@ -366,15 +386,129 @@ function App() {
     window.setTimeout(() => setNotice(''), 3800)
   }
 
+  const checkoutSnapshot = () => cartEntries.map((item) => ({ id: item.id, name: item.name, quantity: cart[item.id], price: item.price, image: item.image }))
+  const recordPlacedOrder = (order) => {
+    const placedAt = order.placedAt || new Date().toISOString()
+    const date = new Date(placedAt)
+    const apiStatus = String(order.orderStatus || 'placed').toLowerCase()
+    const status = apiStatus === 'preparing' ? 'Preparing' : apiStatus === 'ready to serve' || apiStatus === 'ready_to_serve' ? 'Preparing' : apiStatus === 'completed' || apiStatus === 'served' ? 'Completed' : 'Placed'
+    const historyOrder = {
+      id: String(order.orderId), type: 'Dine-in', place: `Table ${order.tableNumber}`,
+      items: order.items.flatMap((item) => Array.from({ length: item.quantity }, () => item.id)), extra: 0,
+      amount: order.total, date: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      time: date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), status,
+    }
+    setPlacedOrders((current) => [historyOrder, ...current.filter((existing) => existing.id !== historyOrder.id)])
+  }
+  const getCheckoutKey = () => {
+    if (!checkoutRequestKey.current) checkoutRequestKey.current = window.crypto?.randomUUID?.() || `tb-${Date.now()}`
+    return checkoutRequestKey.current
+  }
+  const orderRequestBody = (method) => ({
+    orderType: 'dine_in', tableNumber: checkoutTableNumber,
+    items: checkoutSnapshot(), subtotal, tax, total: subtotal + tax,
+    specialInstructions: instructions,
+    paymentMethod: method,
+    paymentStatus: method === 'pay_at_counter' ? 'pending' : 'pending',
+    orderStatus: method === 'pay_at_counter' ? 'placed' : 'pending_payment',
+  })
+
+  const submitCounterOrder = async () => {
+    if (checkoutRequestLock.current) return
+    if (!cartEntries.length) { setCheckoutError('Your cart is empty. Add an item before continuing.'); return }
+    const endpoint = import.meta.env.VITE_ORDER_CREATE_ENDPOINT
+    if (!endpoint) { setCheckoutError('Counter ordering is not connected to a backend yet. Your cart is still saved.'); return }
+    checkoutRequestLock.current = true
+    setCheckoutLoading(true)
+    setCheckoutError('')
+    try {
+      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': getCheckoutKey() }, body: JSON.stringify(orderRequestBody('pay_at_counter')) })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(data?.message || 'We could not place your order. Please try again.')
+      if (!data?.orderId) throw new Error('The server did not return an order ID, so the order was not confirmed.')
+      const order = { ...data, orderId: data.orderId, tableNumber: checkoutTableNumber, items: checkoutSnapshot(), itemCount, subtotal, tax, total: subtotal + tax, paymentMethod: 'pay_at_counter', paymentStatus: 'pending', orderStatus: data.orderStatus || 'placed', placedAt: data.placedAt || data.createdAt || new Date().toISOString() }
+      setPlacedOrder(order)
+      recordPlacedOrder(order)
+      clearCart()
+      setInstructions('')
+      setPage('confirmation')
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'We could not place your order. Please try again.')
+    } finally {
+      checkoutRequestLock.current = false
+      setCheckoutLoading(false)
+    }
+  }
+
+  const createOnlinePayment = async () => {
+    if (checkoutRequestLock.current) return
+    if (!cartEntries.length) { setCheckoutError('Your cart is empty. Add an item before continuing.'); return }
+    const endpoint = import.meta.env.VITE_PAYMENT_CREATE_ENDPOINT
+    if (!endpoint) { setCheckoutError('Online payments are not configured for this restaurant yet. Your cart is still saved.'); return }
+    checkoutRequestLock.current = true
+    setCheckoutLoading(true)
+    setCheckoutError('')
+    try {
+      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': getCheckoutKey() }, body: JSON.stringify(orderRequestBody('upi')) })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(data?.message || 'We could not start your payment. Please try again.')
+      if (!data?.orderId || (!data.qrCodeUrl && !data.paymentUrl)) throw new Error('The payment provider did not return a valid payment session.')
+      if (data.amount != null && Number(data.amount) !== subtotal + tax) throw new Error('The payment amount returned by the provider does not match your order total.')
+      setPaymentSession(data)
+      setPage('onlinePayment')
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'We could not start your payment. Please try again.')
+    } finally {
+      checkoutRequestLock.current = false
+      setCheckoutLoading(false)
+    }
+  }
+
+  const verifyOnlinePayment = async () => {
+    if (checkoutRequestLock.current) return
+    const endpoint = import.meta.env.VITE_PAYMENT_VERIFY_ENDPOINT
+    if (!endpoint) { setCheckoutError('Payment verification is not configured. Please contact the restaurant before leaving this page.'); return }
+    checkoutRequestLock.current = true
+    setCheckoutLoading(true)
+    setCheckoutError('')
+    try {
+      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': getCheckoutKey() }, body: JSON.stringify({ orderId: paymentSession?.orderId, paymentReference: paymentSession?.paymentReference, tableNumber: checkoutTableNumber }) })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(data?.message || 'Payment is not confirmed yet. Complete payment and try again.')
+      if (data?.verified !== true || String(data.paymentStatus).toLowerCase() !== 'paid') throw new Error('Payment is not confirmed yet. Complete payment and try again.')
+      if (data.amount != null && Number(data.amount) !== subtotal + tax) throw new Error('The verified payment amount does not match your order total. Please contact the restaurant.')
+      const order = { ...data, orderId: paymentSession.orderId, tableNumber: checkoutTableNumber, items: checkoutSnapshot(), itemCount, subtotal, tax, total: subtotal + tax, paymentMethod: 'upi', paymentStatus: 'paid', orderStatus: data.orderStatus || 'placed', placedAt: data.placedAt || data.createdAt || new Date().toISOString() }
+      setPlacedOrder(order)
+      recordPlacedOrder(order)
+      clearCart()
+      setInstructions('')
+      setPage('confirmation')
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Payment is not confirmed yet. Complete payment and try again.')
+    } finally {
+      checkoutRequestLock.current = false
+      setCheckoutLoading(false)
+    }
+  }
+
+  const backToCart = () => {
+    if (checkoutLoading) return
+    setCheckoutError('')
+    setPaymentSession(null)
+    checkoutRequestKey.current = null
+    setPage('menu')
+    setCartOpen(true)
+  }
+
   return (
-    <div className={`app-shell ${page === 'orders' ? 'orders-mode' : ''} ${page === 'offers' ? 'offers-mode' : ''} ${page === 'waiter' ? 'waiter-mode' : ''} ${page === 'help' ? 'help-mode' : ''}`}>
+    <div className={`app-shell ${page === 'orders' ? 'orders-mode' : ''} ${page === 'offers' ? 'offers-mode' : ''} ${page === 'waiter' ? 'waiter-mode' : ''} ${page === 'help' ? 'help-mode' : ''} ${['payment', 'onlinePayment', 'confirmation'].includes(page) ? 'checkout-mode' : ''}`}>
       <aside className="sidebar">
         <a className="brand" href="#menu" aria-label="Tasty Bites home">
           <span className="brand-mark"><ChefHat size={27} strokeWidth={2.1} /></span>
           <span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span>
         </a>
         <nav className="side-nav" aria-label="Main navigation">
-          <button className={`side-link ${page === 'menu' ? 'active' : ''}`} onClick={() => setPage('menu')}><Grid2X2 size={19} /><span>Menu</span></button>
+          <button className={`side-link ${page === 'menu' || ['payment', 'onlinePayment', 'confirmation'].includes(page) ? 'active' : ''}`} onClick={() => { setPage('menu'); setCartOpen(false) }}><Grid2X2 size={19} /><span>Menu</span></button>
           <button className={`side-link ${page === 'orders' ? 'active' : ''}`} onClick={() => { setPage('orders'); setOrdersPage(1); setCartOpen(false) }}><Clock3 size={19} /><span>My Orders</span></button>
           <button className={`side-link ${page === 'offers' ? 'active' : ''}`} onClick={() => { setPage('offers'); setCartOpen(false) }}><BadgePercent size={19} /><span>Offers</span><span className="nav-new">{offerCounts.all}</span></button>
           <button className={`side-link ${page === 'waiter' ? 'active' : ''}`} onClick={() => { setPage('waiter'); setCartOpen(false) }}><ConciergeBell size={19} /><span>Call Waiter</span></button>
@@ -433,7 +567,29 @@ function App() {
           {!visibleDishes.length && <div className="empty-menu"><span><Search size={23} /></span><h2>No dishes found</h2><p>Try another search or choose a different category.</p><button onClick={() => { setQuery(''); setCategory('All'); const empty = { diet: 'all', cuisine: 'all', price: 'all', rating: 'all' }; setMenuFilterDraft(empty); setMenuFacetFilters(empty); setMenuSort('recommended') }}>Show all dishes</button></div>}
         </div>
         <footer className="menu-footer"><span>Good food, good mood.</span><span>Made with care <i>at Tasty Bites</i></span></footer>
-      </main> : page === 'help' ? <main className="help-area" id="help">
+      </main> : ['payment', 'onlinePayment', 'confirmation'].includes(page) ? <DineInPaymentPage
+        stage={page}
+        items={cartEntries.map((item) => ({ ...item, quantity: cart[item.id] }))}
+        itemCount={itemCount}
+        subtotal={subtotal}
+        tax={tax}
+        total={subtotal + tax}
+        tableNumber={checkoutTableNumber}
+        paymentMethod={selectedPaymentMethod}
+        onPaymentMethodChange={(method) => { setSelectedPaymentMethod(method); setCheckoutError('') }}
+        onBack={backToCart}
+        onContinue={() => selectedPaymentMethod === 'online' ? createOnlinePayment() : submitCounterOrder()}
+        onVerify={verifyOnlinePayment}
+        onOrders={() => { setPage('orders'); setOrdersPage(1) }}
+        onReturnToMenu={() => { setPage('menu'); setCartOpen(false) }}
+        onViewStatus={() => { setOrderQuery(String(placedOrder?.orderId || '')); setOrderTypeFilter('Dine-in'); setStatusFilter('All Status'); setOrdersPage(1); setPage('orders') }}
+        onCallWaiter={() => { setPage('waiter'); setCartOpen(false) }}
+        loading={checkoutLoading}
+        error={checkoutError}
+        paymentSession={paymentSession}
+        placedOrder={placedOrder}
+        formatMoney={money}
+      /> : page === 'help' ? <main className="help-area" id="help">
         <div className="mobile-brand"><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a></div>
         <div className="mobile-page-nav offers-mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button onClick={() => { setPage('orders'); setOrdersPage(1) }}>My Orders</button><button className="selected" onClick={() => setPage('help')}>Help</button></div>
         <header className="help-heading"><h1>Help &amp; <em>Support</em></h1><p>Have a question or need assistance? We’re always ready to help you.</p></header>
@@ -492,12 +648,12 @@ function App() {
           <article className="summary-card summary-delivered"><span className="summary-icon"><Truck size={29} /></span><div><strong>{orderCounts.delivered}</strong><span>Delivered</span></div></article>
           <article className="summary-card summary-cancelled"><span className="summary-icon"><CircleX size={29} /></span><div><strong>{orderCounts.cancelled}</strong><span>Cancelled</span></div></article>
         </div>
-        <div className="orders-controls"><div className="order-type-tabs" role="tablist" aria-label="Filter by order type">{[{ label: 'All', count: orderCounts.total, icon: ListIcon }, { label: 'Dine-in', count: orderCounts.dineIn, icon: Utensils }, { label: 'Delivery', count: orderCounts.delivery, icon: Truck }].map(({ label, count, icon: Icon }) => <button key={label} className={`order-tab ${orderTypeFilter === label ? 'active' : ''}`} onClick={() => { setOrderTypeFilter(label); setOrdersPage(1) }} role="tab" aria-selected={orderTypeFilter === label}><Icon size={19} />{label} ({count})</button>)}</div><div className="order-selects"><label className="filter-select"><select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setOrdersPage(1) }} aria-label="Filter by order status"><option>All Status</option><option>Completed</option><option>Delivered</option><option>Preparing</option><option>Cancelled</option></select><ChevronDown size={15} /></label><label className="date-select date-secondary"><CalendarDays size={17} /><select value={dateRange} onChange={(event) => setDateRange(event.target.value)} aria-label="Date range"><option>Last 30 days</option><option>Last 7 days</option><option>All time</option></select><ChevronDown size={15} /></label></div></div>
-        <div className="orders-table-wrap"><table className="orders-table"><thead><tr><th>#</th><th>Order ID</th><th>Type</th><th>Table / Address</th><th>Items</th><th>Amount</th><th>Date &amp; Time</th><th>Status</th><th>Actions</th></tr></thead><tbody>{pageOrders.map((order, index) => <tr key={order.id} className={order.status === 'Preparing' ? 'row-preparing' : ''}><td>{(ordersPage - 1) * 10 + index + 1}</td><td className="order-id">#{order.id}</td><td><span className={`order-kind ${order.type === 'Dine-in' ? 'kind-dine' : 'kind-delivery'}`}>{order.type === 'Dine-in' ? <Utensils size={15} /> : <House size={15} />}{order.type}</span></td><td className="order-place">{order.place}</td><td><div className="order-thumbs">{order.items.map((dishId) => { const dish = dishes.find((item) => item.id === dishId); return <img key={dishId} src={photo(dish.image, 90)} alt={dish.name} title={dish.name} /> })}{order.extra > 0 && <span>+{order.extra}</span>}</div><small className="order-item-count">{order.items.length + order.extra} items</small></td><td className="order-amount">{money(order.amount)}</td><td className="order-date">{order.date}<small>{order.time}</small></td><td><StatusBadge status={order.status} /></td><td><button className="view-order" onClick={() => setSelectedOrder(order)}><Eye size={16} />View <ChevronRight size={16} /></button></td></tr>)}{!pageOrders.length && <tr><td colSpan="9"><div className="orders-empty"><Search size={22} /><strong>No matching orders</strong><span>Try another search or change your filters.</span><button onClick={() => { setOrderQuery(''); setOrderTypeFilter('All'); setStatusFilter('All Status') }}>Clear filters</button></div></td></tr>}</tbody></table></div>
+        <div className="orders-controls"><div className="order-type-tabs" role="tablist" aria-label="Filter by order type">{[{ label: 'All', count: orderCounts.total, icon: ListIcon }, { label: 'Dine-in', count: orderCounts.dineIn, icon: Utensils }, { label: 'Delivery', count: orderCounts.delivery, icon: Truck }].map(({ label, count, icon: Icon }) => <button key={label} className={`order-tab ${orderTypeFilter === label ? 'active' : ''}`} onClick={() => { setOrderTypeFilter(label); setOrdersPage(1) }} role="tab" aria-selected={orderTypeFilter === label}><Icon size={19} />{label} ({count})</button>)}</div><div className="order-selects"><label className="filter-select"><select value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); setOrdersPage(1) }} aria-label="Filter by order status"><option>All Status</option><option>Completed</option><option>Delivered</option><option>Preparing</option><option>Placed</option><option>Cancelled</option></select><ChevronDown size={15} /></label><label className="date-select date-secondary"><CalendarDays size={17} /><select value={dateRange} onChange={(event) => setDateRange(event.target.value)} aria-label="Date range"><option>Last 30 days</option><option>Last 7 days</option><option>All time</option></select><ChevronDown size={15} /></label></div></div>
+        <div className="orders-table-wrap"><table className="orders-table"><thead><tr><th>#</th><th>Order ID</th><th>Type</th><th>Table / Address</th><th>Items</th><th>Amount</th><th>Date &amp; Time</th><th>Status</th><th>Actions</th></tr></thead><tbody>{pageOrders.map((order, index) => <tr key={order.id} className={order.status === 'Preparing' ? 'row-preparing' : ''}><td>{(ordersPage - 1) * 10 + index + 1}</td><td className="order-id">#{order.id}</td><td><span className={`order-kind ${order.type === 'Dine-in' ? 'kind-dine' : 'kind-delivery'}`}>{order.type === 'Dine-in' ? <Utensils size={15} /> : <House size={15} />}{order.type}</span></td><td className="order-place">{order.place}</td><td><div className="order-thumbs">{order.items.map((dishId) => { const dish = cartProducts.find((item) => item.id === dishId); return <img key={dishId} src={photo(dish.image, 90)} alt={dish.name} title={dish.name} /> })}{order.extra > 0 && <span>+{order.extra}</span>}</div><small className="order-item-count">{order.items.length + order.extra} items</small></td><td className="order-amount">{money(order.amount)}</td><td className="order-date">{order.date}<small>{order.time}</small></td><td><StatusBadge status={order.status} /></td><td><button className="view-order" onClick={() => setSelectedOrder(order)}><Eye size={16} />View <ChevronRight size={16} /></button></td></tr>)}{!pageOrders.length && <tr><td colSpan="9"><div className="orders-empty"><Search size={22} /><strong>No matching orders</strong><span>Try another search or change your filters.</span><button onClick={() => { setOrderQuery(''); setOrderTypeFilter('All'); setStatusFilter('All Status') }}>Clear filters</button></div></td></tr>}</tbody></table></div>
         <div className="orders-pagination"><span>Showing {filteredOrders.length ? (ordersPage - 1) * 10 + 1 : 0}–{Math.min(ordersPage * 10, filteredOrders.length)} of {filteredOrders.length} orders</span><div><button aria-label="Previous page" disabled={ordersPage === 1} onClick={() => setOrdersPage((n) => n - 1)}><ChevronLeft size={18} /></button>{filteredOrders.length > 10 ? <><button className={ordersPage === 1 ? 'page-current' : ''} aria-current={ordersPage === 1 ? 'page' : undefined} onClick={() => setOrdersPage(1)}>1</button><button className={ordersPage === 2 ? 'page-current' : ''} aria-current={ordersPage === 2 ? 'page' : undefined} onClick={() => setOrdersPage(2)}>2</button></> : <button className="page-current" aria-current="page">1</button>}<button aria-label="Next page" disabled={ordersPage * 10 >= filteredOrders.length} onClick={() => setOrdersPage((n) => n + 1)}><ChevronRight size={18} /></button></div></div>
       </main>}
 
-      <aside className={`cart-panel ${cartOpen ? 'cart-panel-open' : ''} ${page === 'orders' || page === 'help' ? 'cart-panel-hidden' : ''}`} id="cart" aria-label="Your cart">
+      <aside className={`cart-panel ${cartOpen ? 'cart-panel-open' : ''} ${page === 'orders' || page === 'help' || ['payment', 'onlinePayment', 'confirmation'].includes(page) ? 'cart-panel-hidden' : ''}`} id="cart" aria-label="Your cart">
         <div className="cart-header"><div><span className="cart-icon"><ShoppingCart size={24} /></span><h2>Your Cart <small>({itemCount} {itemCount === 1 ? 'item' : 'items'})</small></h2></div><div className="cart-header-actions">{itemCount > 0 && <button className="clear-button" onClick={clearCart}><Trash2 size={15} /> Clear All</button>}<button className="icon-button close-cart" aria-label="Close cart" onClick={() => setCartOpen(false)}><X size={19} /></button></div></div>
         <div className="cart-content">
           <div className="cart-scroll">
@@ -520,10 +676,11 @@ function App() {
         </div>
       </aside>
       {cartOpen && <button className="cart-scrim" aria-label="Close cart overlay" onClick={() => setCartOpen(false)} />}
-      {selectedOrder && <div className="order-modal-backdrop" onClick={() => setSelectedOrder(null)}><section className="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title" onClick={(event) => event.stopPropagation()}><button className="icon-button modal-close" onClick={() => setSelectedOrder(null)} aria-label="Close order details"><X size={19} /></button><span className="modal-order-icon"><PackageCheck size={25} /></span><h2 id="order-modal-title">Order #{selectedOrder.id}</h2><StatusBadge status={selectedOrder.status} /><div className="modal-meta"><span>{selectedOrder.type}</span><span>{selectedOrder.place}</span><span>{selectedOrder.date} · {selectedOrder.time}</span></div><div className="modal-dishes">{selectedOrder.items.map((dishId, index) => { const dish = dishes.find((item) => item.id === dishId); return <div key={`${dishId}-${index}`}><img src={photo(dish.image, 100)} alt="" /><span>{dish.name}</span><strong>{money(dish.price)}</strong></div> })}</div><div className="modal-total"><span>Order total</span><strong>{money(selectedOrder.amount)}</strong></div><button className="modal-done" onClick={() => setSelectedOrder(null)}>Done</button></section></div>}
+      {selectedOrder && <div className="order-modal-backdrop" onClick={() => setSelectedOrder(null)}><section className="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title" onClick={(event) => event.stopPropagation()}><button className="icon-button modal-close" onClick={() => setSelectedOrder(null)} aria-label="Close order details"><X size={19} /></button><span className="modal-order-icon"><PackageCheck size={25} /></span><h2 id="order-modal-title">Order #{selectedOrder.id}</h2><StatusBadge status={selectedOrder.status} /><div className="modal-meta"><span>{selectedOrder.type}</span><span>{selectedOrder.place}</span><span>{selectedOrder.date} · {selectedOrder.time}</span></div><div className="modal-dishes">{selectedOrder.items.map((dishId, index) => { const dish = cartProducts.find((item) => item.id === dishId); return <div key={`${dishId}-${index}`}><img src={photo(dish.image, 100)} alt="" /><span>{dish.name}</span><strong>{money(dish.price)}</strong></div> })}</div><div className="modal-total"><span>Order total</span><strong>{money(selectedOrder.amount)}</strong></div><button className="modal-done" onClick={() => setSelectedOrder(null)}>Done</button></section></div>}
       {notice && <div className="toast" role="status"><span><Check size={16} /></span>{notice}</div>}
     </div>
   )
 }
 
 export default App
+

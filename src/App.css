@@ -175,6 +175,7 @@ button { border: 0; cursor: pointer; }
 
 /* Order history */
 .app-shell.orders-mode { grid-template-columns: 244px minmax(0, 1fr); }
+.app-shell.checkout-mode { grid-template-columns: 230px minmax(0, 1fr); }
 .cart-panel-hidden { display: none; }
 .orders-area { min-width: 0; padding: 15px 20px 20px; overflow: hidden; background: #fff; }
 .waiter-area { min-width: 0; min-height: 100vh; padding: 28px 30px; display: grid; place-items: center; background-color: #fff8f1; background-image: url('./assets/waiter-background.png'); background-size: cover; background-position: center; }
@@ -336,6 +337,7 @@ button { border: 0; cursor: pointer; }
 .status-badge { min-width: 90px; min-height: 32px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 .status-completed { background: #e8f8ed; color: #078637; }
 .status-delivered { background: #e8f8ed; color: #078637; }
+.status-placed { background: #fff3df; color: #ba5a07; }
 .status-preparing { min-height: 39px; justify-content: flex-start; flex-wrap: wrap; column-gap: 6px; border-radius: 10px; background: #fff3df; color: #cf5a00; }
 .status-preparing svg { width: 18px; height: 18px; }
 .status-preparing small { width: 100%; margin-left: 24px; margin-top: -8px; color: #786a55; font-size: 9px; font-weight: 500; }
@@ -475,6 +477,7 @@ button { border: 0; cursor: pointer; }
 }
 @media (max-width: 1050px) {
   .app-shell { grid-template-columns: 190px minmax(0, 1fr); }
+  .app-shell.checkout-mode { grid-template-columns: 190px minmax(0, 1fr); }
   .app-shell.offers-mode { grid-template-columns: 190px minmax(0, 1fr); }
   .app-shell.help-mode { grid-template-columns: 190px minmax(0, 1fr); }
   .help-main-grid { grid-template-columns: minmax(0, 1fr); }
@@ -495,7 +498,7 @@ button { border: 0; cursor: pointer; }
   .order-selects { width: 100%; justify-content: flex-start; }
 }
 @media (max-width: 690px) {
-  .app-shell, .app-shell.orders-mode, .app-shell.help-mode { display: block; }
+  .app-shell, .app-shell.orders-mode, .app-shell.help-mode, .app-shell.checkout-mode { display: block; }
   .sidebar { display: none; }
   .menu-area { padding: 12px 13px 88px; }
   .mobile-brand { margin-bottom: 12px; }
@@ -674,7 +677,8 @@ button { border: 0; cursor: pointer; }
   .offer-card-footer { flex-basis: 44px; height: 44px; }
   .offer-price strong { font-size: 21px; }
   .offer-price del { font-size: 12px; }
-  .offer-add-button { min-width: 100px; height: 43px; padding-inline: 13px; border-radius: 10px; font-size: 14px; }
+  .offer-add-button { min-width: 86px; height: 34px; padding-inline: 10px; gap: 6px; border-radius: 9px; font-size: 13px; }
+  .offer-add-button svg { width: 16px; height: 16px; }
 }
 @media (max-width: 360px) {
   .menu-area { padding-inline: 10px; }
