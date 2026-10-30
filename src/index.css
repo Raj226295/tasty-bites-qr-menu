@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #161a23;
+  background: #f7f8fa;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  --ink: #161a23;
+  --muted: #687386;
+  --soft: #8993a3;
+  --line: #e9edf2;
+  --orange: #ff6200;
+  --orange-dark: #eb5700;
+  --orange-pale: #fff4eb;
+  --green: #159447;
+  --shadow: 0 8px 22px rgba(25, 34, 50, .045);
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; min-height: 100%; scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, textarea { font: inherit; }
+button { color: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid rgba(255, 98, 0, .42); outline-offset: 3px; }
+::selection { color: #772b00; background: #ffd9bf; }
+* { scrollbar-color: #cbd2dc transparent; scrollbar-width: thin; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

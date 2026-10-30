@@ -1,0 +1,18 @@
+.tb-bell-animation { position: relative; width: clamp(240px, 29vw, 390px); aspect-ratio: 1; margin: 0 auto 0; display: grid; place-items: center; isolation: isolate; }
+.tb-bell-animation::before { content: ''; position: absolute; inset: 5%; z-index: -2; border-radius: 50%; background: radial-gradient(circle, rgba(255,147,45,.22), rgba(255,171,79,.1) 48%, rgba(255,171,79,0) 73%); }
+.tb-bell-animation .bell { position: relative; z-index: 1; width: 100%; height: 100%; display: grid; place-items: center; transform-origin: 50% 72%; animation: bellIdle 4s ease-in-out infinite; filter: drop-shadow(0 14px 12px rgba(137,77,16,.13)); }
+.tb-bell-animation .bell-part { width: 100%; height: 100%; display: grid; place-items: center; }
+.tb-bell-animation .bell img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.tb-bell-animation .bell-parts-container { position: absolute; inset: 12%; display: grid; place-items: center; z-index: -1; }
+.tb-bell-animation .circle { position: absolute; width: 53%; aspect-ratio: 1; border: 2px solid rgba(255,106,0,.5); border-radius: 50%; opacity: 0; transform: scale(.65); }
+.tb-bell-animation.ringing .bell { animation: bellAnim .24s ease-in-out 12; }
+.tb-bell-animation.ringing .circle1 { animation: circleAnim 1.2s ease-out 2; }
+.tb-bell-animation.ringing .circle2 { animation: circleAnim 1.2s ease-out .28s 2; }
+.tb-bell-animation.ringing .circle3 { animation: circleAnim 1.2s ease-out .56s 2; }
+@keyframes bellIdle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes bellAnim { 0%,100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-3px) rotate(-5deg); } 75% { transform: translateY(-3px) rotate(5deg); } }
+@keyframes bellClapperAnim { 0%,100% { transform: rotate(0); } 50% { transform: rotate(12deg); } }
+@keyframes circleAnim { 0% { opacity: .55; transform: scale(.55); } 100% { opacity: 0; transform: scale(2.2); } }
+@keyframes bellPartsContainerAnim { 0% { opacity: .65; transform: scale(.55); } 100% { opacity: 0; transform: scale(2.2); } }
+@media (max-width: 690px) { .tb-bell-animation { width: min(74vw, 320px); margin-bottom: -6px; } }
+@media (prefers-reduced-motion: reduce) { .tb-bell-animation .bell { animation: none; } .tb-bell-animation.ringing .bell { animation-duration: .5s; animation-iteration-count: 1; } .tb-bell-animation.ringing .circle { animation-duration: .55s; animation-iteration-count: 1; } }
