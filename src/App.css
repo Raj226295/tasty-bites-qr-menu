@@ -69,10 +69,19 @@ button { border: 0; cursor: pointer; }
 .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-content: start; }
 .product-card { min-width: 0; overflow: hidden; border: 1px solid #e9edf1; border-radius: 16px; background: #fff; box-shadow: 0 5px 16px rgba(24, 34, 48, .07); transition: transform .2s, box-shadow .2s, border-color .2s; cursor: pointer; }
 .product-card:hover { transform: translateY(-3px); border-color: #ffc69f; box-shadow: 0 13px 28px rgba(43, 38, 32, .13); }
+.product-card-color-glow { --glow-primary: rgba(255, 111, 38, .46); --glow-secondary: rgba(255, 143, 70, .2); --glow-border: rgba(255, 132, 66, .55); --glow-shadow: rgba(255, 98, 0, .14); border-color: var(--glow-border); box-shadow: 0 8px 22px rgba(25, 34, 50, .07), 0 0 20px var(--glow-shadow); }
+.product-card-color-glow-0 { --glow-primary: rgba(255, 105, 45, .46); --glow-secondary: rgba(255, 190, 83, .23); --glow-border: rgba(255, 132, 66, .55); --glow-shadow: rgba(255, 98, 0, .14); }
+.product-card-color-glow-1 { --glow-primary: rgba(255, 120, 48, .46); --glow-secondary: rgba(255, 130, 100, .24); --glow-border: rgba(255, 143, 95, .58); --glow-shadow: rgba(255, 105, 49, .15); }
+.product-card-color-glow-2 { --glow-primary: rgba(255, 132, 36, .46); --glow-secondary: rgba(255, 206, 89, .24); --glow-border: rgba(255, 163, 64, .6); --glow-shadow: rgba(255, 132, 0, .15); }
+.product-card-color-glow:hover { border-color: var(--glow-border); box-shadow: 0 13px 28px rgba(43, 38, 32, .13), 0 0 24px var(--glow-shadow); }
 .product-card:focus-visible { outline: 3px solid rgba(255, 98, 0, .42); outline-offset: 3px; }
 .product-photo-wrap { position: relative; aspect-ratio: 1.65; margin: 7px 7px 0; overflow: hidden; border-radius: 13px; background: #ece8e2; }
 .product-photo { width: 100%; height: 100%; display: block; object-fit: cover; filter: saturate(1.12) contrast(1.04); transition: transform .35s, filter .35s; }
 .product-card:hover .product-photo { transform: scale(1.035); }
+.product-card-color-glow .product-photo { position: relative; z-index: 0; }
+.product-card-color-glow .product-photo-wrap::after { content: ''; position: absolute; z-index: 1; inset: -28% -18%; pointer-events: none; background: radial-gradient(ellipse at 36% 30%, var(--glow-primary) 0%, transparent 66%), radial-gradient(ellipse at 76% 72%, var(--glow-secondary) 0%, transparent 58%); filter: blur(15px); mix-blend-mode: screen; animation: product-card-warm-glow 6s ease-in-out infinite alternate; }
+.product-card-color-glow .product-photo-wrap > :not(.product-photo) { z-index: 2; }
+@keyframes product-card-warm-glow { from { opacity: .42; transform: translate3d(-2%, 1%, 0) scale(.96); } to { opacity: .76; transform: translate3d(3%, -1%, 0) scale(1.04); } }
 .diet-mark { position: absolute; top: 12px; left: 12px; width: 30px; height: 30px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 5px; background: #fff; box-shadow: 0 1px 5px rgba(0,0,0,.2); }
 .diet-mark > span { width: 14px; height: 14px; border-radius: 50%; background: currentColor; }
 .diet-mark.veg { color: #078b35; }
@@ -188,6 +197,7 @@ button { border: 0; cursor: pointer; }
 .admin-login-brand { margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; gap: 11px; color: #121b2b; }
 .admin-brand-mark { width: 48px; height: 48px; display: grid; place-items: center; border: 1px solid #ffd9c4; border-radius: 15px; background: #fff5ee; color: #172033; box-shadow: inset 0 0 0 3px #fff; }
 .admin-brand-mark svg { width: 28px; height: 28px; }
+.admin-brand-mark img { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
 .admin-login-brand > span:last-child { display: grid; text-align: center; }
 .admin-login-brand strong { font: 800 27px/1.1 'Manrope', sans-serif; letter-spacing: -1px; white-space: nowrap; }
 .admin-login-brand strong i { color: #ff5a00; font-style: normal; }
