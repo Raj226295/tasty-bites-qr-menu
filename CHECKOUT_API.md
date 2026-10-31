@@ -16,6 +16,10 @@ All endpoints receive JSON and the app sends an `Idempotency-Key` header so retr
 
 Return a successful 2xx JSON response containing an `orderId`. The UI only shows order confirmation after this response.
 
+## Home delivery demo
+
+Home delivery currently opens the confirmation page directly after the guest submits the address form. It generates a demo order ID and keeps the order in in-memory page state. Connect this flow to `VITE_ORDER_CREATE_ENDPOINT` when the restaurant order API is ready. Payment is not initiated here.
+
 ## Online payment
 
 `VITE_PAYMENT_CREATE_ENDPOINT` receives the same order snapshot with `paymentMethod: "upi"` and `orderStatus: "pending_payment"`. Return a successful 2xx JSON response containing `orderId` and either `qrCodeUrl` or `paymentUrl`. `paymentReference` and `amount` may also be returned; if amount is returned, it must match the checkout total.

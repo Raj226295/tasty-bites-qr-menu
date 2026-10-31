@@ -1,0 +1,120 @@
+.delivery-confirm-area { min-width: 0; min-height: 100vh; padding: 16px clamp(14px, 1.6vw, 24px) 24px; background: #f8fafc; color: #172033; }
+.delivery-confirm-grid { width: min(100%, 1500px); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.58fr) minmax(360px, .98fr); grid-template-areas: "success summary" "status address"; gap: 14px; align-items: stretch; }
+.delivery-confirm-success, .delivery-confirm-status, .delivery-confirm-panel { min-width: 0; padding: 18px; border: 1px solid #e9edf2; border-radius: 15px; background: #fff; box-shadow: 0 4px 15px rgba(22, 35, 52, .055); }
+.delivery-confirm-success { grid-area: success; display: flex; flex-direction: column; align-items: stretch; text-align: left; }
+.delivery-confirm-hero { min-height: 126px; margin: -8px 0 7px; display: flex; align-items: center; justify-content: center; gap: clamp(12px, 2.2vw, 28px); }
+.delivery-confirm-hero-copy { min-width: 0; }
+.delivery-confirm-success h1 { margin: 0; color: #111827; font: 800 clamp(27px, 2.45vw, 36px)/1.12 'Manrope', sans-serif; letter-spacing: -.8px; }
+.delivery-confirm-success .delivery-confirm-hero-copy p { max-width: 52ch; margin: 8px 0 0; color: #586780; font-size: 13px; line-height: 1.5; }
+.delivery-confirm-hero .order-success-animation { width: 120px; height: 120px; }
+.delivery-confirm-hero .order-success-progress-ring { width: 100px; height: 100px; }
+.delivery-confirm-hero .order-success-check-circle { width: 80px; height: 80px; }
+.delivery-confirm-hero .order-success-check-circle svg { width: 44px; height: 44px; }
+.delivery-confirm-meta { width: 100%; min-height: 76px; padding: 10px 12px; display: grid; grid-template-columns: 46px minmax(0, 1.25fr) minmax(120px, .75fr); align-items: center; gap: 11px; border-radius: 11px; background: #fff6ef; text-align: left; }
+.delivery-confirm-rider { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 11px; background: #ffeadb; color: #f4510b; }
+.delivery-confirm-meta > div:nth-child(2), .delivery-confirm-order-id { min-width: 0; display: grid; gap: 4px; }
+.delivery-confirm-meta > div:nth-child(2) { padding-right: 11px; border-right: 1px solid #f0dfd4; }
+.delivery-confirm-meta small { color: #5f6e86; font-size: 10px; line-height: 1.3; }
+.delivery-confirm-meta strong { color: #172033; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.delivery-confirm-order-id strong { font-size: 15px; }
+.delivery-success-details { width: 100%; margin-top: 10px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: left; }
+.delivery-success-details > div { min-width: 0; min-height: 58px; padding: 10px 12px; display: grid; align-content: center; gap: 5px; border: 1px solid #f1eae5; border-radius: 10px; background: #fffdfa; }
+.delivery-success-details small { color: #66748c; font-size: 10px; }
+.delivery-success-details strong { overflow: hidden; color: #202b40; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.delivery-success-details .delivery-success-status { color: #e65309; text-transform: capitalize; }
+.delivery-track-button { width: 100%; min-height: 46px; margin-top: 11px; padding-inline: 14px; display: flex; align-items: center; justify-content: center; gap: 9px; border-radius: 10px; background: linear-gradient(100deg, #ff5a00, #ff6e08); color: #fff; font-size: 13px; font-weight: 800; box-shadow: 0 5px 13px rgba(255, 90, 0, .16); }
+.delivery-help-strip { width: 100%; min-height: 38px; margin-top: 9px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.delivery-help-strip > span { display: inline-flex; align-items: center; gap: 7px; color: #344259; font-size: 11px; }
+.delivery-help-strip > span svg { color: #f4510b; }
+.delivery-help-strip button { min-height: 35px; padding: 0 11px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid #ff9b65; border-radius: 9px; background: #fff; color: #c94a06; font-size: 10px; font-weight: 800; }
+.delivery-confirm-summary { grid-area: summary; display: flex; flex-direction: column; }
+.delivery-confirm-status { grid-area: status; display: flex; flex-direction: column; }
+.delivery-address-card { grid-area: address; display: flex; flex-direction: column; }
+.delivery-confirm-status-heading { min-height: 24px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.delivery-confirm-status-heading h2, .delivery-confirm-panel-title h2 { margin: 0; color: #172033; font: 800 16px/1.25 'Manrope', sans-serif; }
+.delivery-confirm-status-heading > span { display: inline-flex; align-items: center; gap: 6px; color: #5f6e86; font-size: 11px; white-space: nowrap; }
+.delivery-confirm-status-heading > span svg, .delivery-confirm-status-heading > span b { color: #e65309; }
+.delivery-confirm-status ol { flex: 1; min-height: 116px; margin: 18px 0 0; padding: 0; display: flex; align-items: center; list-style: none; }
+.delivery-confirm-status li { position: relative; min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.delivery-progress-icon { position: relative; z-index: 1; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: #edf0f4; color: #65728a; }
+.delivery-confirm-status li.reached .delivery-progress-icon { background: #ff5a00; color: #fff; box-shadow: 0 0 0 4px #fff0e5; }
+.delivery-confirm-status li.current .delivery-progress-icon { background: #12ad5b; color: #fff; box-shadow: 0 0 0 4px #eaf8ef; }
+.delivery-confirm-status li > strong { color: #273248; font-size: 11px; line-height: 1.3; }
+.delivery-confirm-status li > small { max-width: 130px; color: #66748c; font-size: 10px; line-height: 1.4; }
+.delivery-confirm-status li > i { position: absolute; top: 20px; left: calc(50% + 25px); width: calc(100% - 50px); height: 2px; background: #e5e9ef; }
+.delivery-confirm-status li > i.reached { background: #ff6b1a; }
+.delivery-confirm-panel-title { min-height: 24px; margin-bottom: 11px; display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+.delivery-confirm-panel-title h2 { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; }
+.delivery-confirm-panel-title h2 svg { color: #f4510b; flex: 0 0 auto; }
+.delivery-confirm-panel-title > span { color: #63718a; font-size: 11px; white-space: nowrap; }
+.delivery-confirm-items { flex: 0 0 auto; min-height: 0; max-height: 235px; overflow: auto; }
+.delivery-confirm-items article { min-height: 72px; padding: 10px 0; display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 12px; border-bottom: 1px solid #edf0f4; }
+.delivery-confirm-items img { width: 58px; height: 58px; border-radius: 11px; object-fit: cover; background: #f1f3f6; }
+.delivery-confirm-items article > div { min-width: 0; display: grid; gap: 4px; }
+.delivery-confirm-items article > div strong { overflow: hidden; color: #1c273a; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.delivery-confirm-items article > div small, .delivery-confirm-items article > span { color: #5f6e86; font-size: 11px; }
+.delivery-confirm-items article > span { display: grid; gap: 4px; text-align: right; }
+.delivery-confirm-items article > span b { color: #243149; font-size: 12px; }
+.delivery-confirm-bill { margin-top: 14px; padding-top: 13px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 12px; border-top: 1px solid #edf0f4; color: #5f6e86; font-size: 12px; }
+.delivery-confirm-bill > b { color: #29364c; text-align: right; }
+.delivery-confirm-bill > strong { margin-top: 3px; padding: 10px 11px; background: #fff5ed; color: #172033; font-size: 14px; }
+.delivery-confirm-bill > strong:nth-last-child(2) { border-radius: 9px 0 0 9px; }
+.delivery-confirm-bill > strong:last-child { border-radius: 0 9px 9px 0; color: #ec5207; text-align: right; }
+.delivery-address-person { display: flex; gap: 11px; align-items: flex-start; }
+.delivery-address-person > span, .delivery-partner > span { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 11px; background: #fff0e5; color: #f4510b; }
+.delivery-address-person > div { min-width: 0; display: grid; gap: 5px; }
+.delivery-address-person strong, .delivery-partner strong { color: #253149; font-size: 12px; line-height: 1.35; }
+.delivery-address-person small, .delivery-partner small { color: #5f6e86; font-size: 11px; line-height: 1.35; }
+.delivery-address-person p { margin: 2px 0 0; display: flex; align-items: flex-start; gap: 6px; color: #445169; font-size: 11px; line-height: 1.45; }
+.delivery-address-person p svg { flex: 0 0 auto; color: #f4510b; }
+.delivery-partner { margin-top: auto; padding-top: 14px; display: flex; align-items: flex-start; gap: 11px; border-top: 1px solid #edf0f4; }
+.delivery-partner > span { background: #fff5ed; color: #ed661e; }
+.delivery-partner > div { min-width: 0; display: grid; gap: 5px; }
+.delivery-partner p { margin: 0; color: #66748c; font-size: 10px; line-height: 1.45; }
+.delivery-partner > button { width: 38px; height: 38px; margin-left: auto; display: grid; place-items: center; flex: 0 0 auto; border-radius: 10px; background: #fff0e5; color: #ec5a12; }
+@media (max-width: 1050px) {
+  .delivery-confirm-grid { max-width: 850px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "success" "summary" "address" "status"; }
+  .delivery-confirm-summary, .delivery-address-card, .delivery-confirm-status { min-height: 0; }
+  .delivery-confirm-items { flex: initial; max-height: 300px; }
+  .delivery-confirm-bill { margin-top: 14px; }
+  .delivery-partner { margin-top: 14px; }
+  .delivery-confirm-status ol { min-height: 125px; }
+}
+@media (max-width: 600px) {
+  .delivery-confirm-area { min-height: 100dvh; padding: 11px 12px 22px; }
+  .delivery-confirm-grid { gap: 10px; }
+  .delivery-confirm-success, .delivery-confirm-status, .delivery-confirm-panel { padding: 13px; border-radius: 13px; }
+  .delivery-confirm-hero { min-height: 0; margin: -5px 0 5px; justify-content: flex-start; gap: 8px; }
+  .delivery-confirm-hero .order-success-animation { width: 88px; height: 94px; }
+  .delivery-confirm-hero .order-success-check-circle { width: 66px; height: 66px; border-width: 6px; }
+  .delivery-confirm-hero .order-success-check-circle svg { width: 36px; height: 36px; }
+  .delivery-confirm-hero .order-success-progress-ring { width: 82px; height: 82px; }
+  .delivery-confirm-success h1 { font-size: clamp(22px, 6vw, 28px); }
+  .delivery-confirm-success .delivery-confirm-hero-copy p { margin: 5px 0 0; font-size: 11px; }
+  .delivery-confirm-meta { grid-template-columns: 38px minmax(0, 1fr); gap: 8px; padding: 9px; }
+  .delivery-confirm-rider { width: 36px; height: 36px; }
+  .delivery-confirm-rider svg { width: 27px; height: 27px; }
+  .delivery-confirm-meta > div:nth-child(2) { padding-right: 0; border-right: 0; }
+  .delivery-success-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .delivery-success-details > div { min-height: 54px; padding: 8px 9px; }
+  .delivery-confirm-order-id { grid-column: 2; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 7px; }
+  .delivery-confirm-order-id small:last-child { grid-column: 1 / -1; }
+  .delivery-track-button { min-height: 43px; }
+  .delivery-help-strip { align-items: flex-start; flex-direction: column; }
+  .delivery-help-strip button { min-height: 36px; }
+  .delivery-confirm-status-heading { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .delivery-confirm-status ol { min-height: 115px; margin-top: 12px; }
+  .delivery-progress-icon { width: 34px; height: 34px; }
+  .delivery-progress-icon svg { width: 17px; height: 17px; }
+  .delivery-confirm-status li { gap: 5px; }
+  .delivery-confirm-status li > strong { font-size: 9px; }
+  .delivery-confirm-status li > small { max-width: 75px; font-size: 8px; }
+  .delivery-confirm-status li > i { top: 16px; left: calc(50% + 20px); width: calc(100% - 40px); }
+  .delivery-confirm-panel-title h2 { font-size: 14px; }
+  .delivery-confirm-items article { grid-template-columns: 43px minmax(0, 1fr) auto; gap: 8px; }
+  .delivery-confirm-items img { width: 43px; height: 43px; }
+  .delivery-confirm-items article > div strong { font-size: 11px; }
+  .delivery-confirm-items article > div small, .delivery-confirm-items article > span { font-size: 10px; }
+  .delivery-confirm-bill { font-size: 11px; }
+  .delivery-confirm-bill > strong { font-size: 13px; }
+}

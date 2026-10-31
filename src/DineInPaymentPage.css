@@ -55,6 +55,11 @@
 .confirmation-success-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .confirmation-check { width: 90px; height: 90px; margin-bottom: 7px; display: grid; place-items: center; border: 9px solid #e9f8ef; border-radius: 50%; background: #10b45b; color: #fff; box-shadow: 0 0 0 9px #f5fcf7; }
 .confirmation-success-panel h1 { margin: 9px 0 0; color: #101828; font: 800 clamp(30px, 3vw, 39px)/1.12 'Manrope', sans-serif; letter-spacing: -1px; }
+.confirmation-success-panel > .order-success-animation { margin: -12px 0 -3px; }
+.confirmation-success-details { width: 100%; margin-top: 10px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; text-align: left; }
+.confirmation-success-details > div { min-width: 0; padding: 8px; display: grid; gap: 4px; border: 1px solid #f1eae5; border-radius: 9px; background: #fffdfa; }
+.confirmation-success-details small { color: #64728b; font-size: 10px; }
+.confirmation-success-details strong { overflow: hidden; color: #202b40; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .confirmation-success-copy { margin: 6px 0 15px; color: #64728b; font-size: 14px; }
 .confirmation-table-card { width: 100%; min-height: 76px; padding: 12px 15px; display: flex; align-items: center; gap: 14px; border-radius: 12px; background: #fff7f0; text-align: left; }
 .confirmation-table-card > span { width: 48px; height: 48px; flex: 0 0 auto; display: grid; place-items: center; color: #ff5a00; }

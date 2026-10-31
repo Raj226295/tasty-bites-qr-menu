@@ -1,0 +1,15 @@
+.order-success-animation { position: relative; width: 142px; height: 142px; flex: 0 0 auto; display: grid; place-items: center; isolation: isolate; }
+.order-success-check-circle { position: relative; z-index: 2; width: 88px; height: 88px; display: grid; place-items: center; border: 8px solid #fff0e5; border-radius: 50%; background: #ff5a00; color: #fff; box-shadow: 0 0 0 6px #fff8f3, 0 9px 25px rgba(255, 90, 0, .18); }
+.order-success-check-circle svg { width: 48px; height: 48px; overflow: visible; }
+.order-success-check-circle path { fill: none; stroke: currentColor; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.order-success-progress-ring { position: absolute; z-index: 3; width: 108px; height: 108px; overflow: visible; transform: rotate(-90deg); pointer-events: none; }
+.order-success-progress-ring circle { fill: none; stroke: #ff5a00; stroke-width: 3; stroke-linecap: round; }
+.order-success-ripple { position: absolute; z-index: 0; top: 50%; left: 50%; width: 94px; height: 94px; border: 2px solid rgba(255, 90, 0, .24); border-radius: 50%; pointer-events: none; }
+.order-success-ripple-inner { width: 94px; height: 94px; border-color: rgba(255, 90, 0, .16); }
+.order-success-confetti { position: absolute; z-index: 1; top: calc(50% - 4px); left: calc(50% - 4px); width: 8px; height: 8px; background: var(--confetti-color); pointer-events: none; }
+.confetti-circle { border-radius: 50%; }
+.confetti-square { border-radius: 2px; }
+.confetti-triangle { width: 0; height: 0; background: transparent; border-right: 5px solid transparent; border-bottom: 9px solid var(--confetti-color); border-left: 5px solid transparent; }
+.confetti-streamer { width: 14px; height: 4px; border-radius: 4px; }
+@media (max-width: 600px) { .order-success-animation { width: 120px; height: 120px; } .order-success-check-circle { width: 76px; height: 76px; border-width: 7px; } .order-success-check-circle svg { width: 41px; height: 41px; } .order-success-progress-ring { width: 94px; height: 94px; } }
+@media (prefers-reduced-motion: reduce) { .order-success-confetti, .order-success-ripple { display: none; } }

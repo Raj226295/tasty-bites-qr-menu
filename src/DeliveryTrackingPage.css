@@ -1,0 +1,120 @@
+.delivery-tracking-area { min-width: 0; min-height: 100vh; padding: 18px clamp(16px, 1.8vw, 28px) 28px; background: #f8fafc; color: #172033; }
+.tracking-topbar { width: min(100%, 1500px); min-height: 85px; margin: 0 auto 14px; display: flex; align-items: center; gap: 13px; }
+.tracking-topbar > button { width: 40px; height: 40px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid #e4e9f0; border-radius: 11px; background: #fff; color: #344054; }
+.tracking-topbar > div { min-width: 0; flex: 1; }
+.tracking-topbar h1 { margin: 0; color: #111827; font: 800 clamp(24px, 2.4vw, 34px)/1.15 'Manrope', sans-serif; letter-spacing: -.6px; }
+.tracking-topbar p { margin: 5px 0 0; color: #65728a; font-size: 13px; }
+.tracking-estimate { min-width: 185px; min-height: 63px; padding: 8px 13px; display: grid; grid-template-columns: 27px auto; align-content: center; align-items: center; column-gap: 8px; border-radius: 13px; background: #fff1e7; color: #f4510b; }
+.tracking-estimate svg { grid-row: span 2; }
+.tracking-estimate small { color: #65728a; font-size: 10px; }
+.tracking-estimate strong { font: 800 17px 'Manrope', sans-serif; }
+.delivery-tracking-grid { width: min(100%, 1500px); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(340px, .88fr); gap: 14px; align-items: start; }
+.tracking-main-column, .tracking-side-column { min-width: 0; display: grid; gap: 13px; align-content: start; }
+.tracking-timeline-card, .tracking-route-card, .tracking-summary-card, .tracking-address-card { min-width: 0; padding: 17px; border: 1px solid #e9edf2; border-radius: 15px; background: #fff; box-shadow: 0 4px 16px rgba(22, 35, 52, .035); }
+.tracking-panel-heading { min-height: 25px; margin-bottom: 13px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tracking-panel-heading h2 { margin: 0; display: inline-flex; align-items: center; gap: 7px; color: #172033; font: 800 15px 'Manrope', sans-serif; }
+.tracking-panel-heading h2 svg { color: #f4510b; }
+.tracking-panel-heading > span { color: #69768c; font-size: 10px; }
+.tracking-timeline-card .tracking-panel-heading > span { display: inline-flex; align-items: center; gap: 5px; }
+.tracking-timeline-card .tracking-panel-heading > span svg, .tracking-timeline-card .tracking-panel-heading > span b { color: #e9570b; }
+.tracking-timeline { margin: 20px 0 4px; padding: 0; display: flex; list-style: none; }
+.tracking-timeline li { position: relative; min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; }
+.tracking-step-icon { position: relative; z-index: 1; width: 47px; height: 47px; display: grid; place-items: center; border: 1px solid #e1e6ed; border-radius: 50%; background: #eff2f6; color: #617089; }
+.tracking-timeline li.complete .tracking-step-icon { border-color: #ff5a00; background: #ff5a00; color: #fff; }
+.tracking-timeline li.current .tracking-step-icon { border-color: #ff5a00; background: #ff6508; color: #fff; box-shadow: 0 0 0 6px #fff0e5; }
+.tracking-timeline li > strong { margin-top: 3px; color: #202b3f; font-size: 12px; }
+.tracking-timeline li > small { color: #586780; font-size: 11px; }
+.tracking-timeline li > p { max-width: 25ch; margin: 0; color: #68768d; font-size: 10px; line-height: 1.45; }
+.tracking-timeline li > i { position: absolute; z-index: 0; top: 22px; left: calc(50% + 28px); width: calc(100% - 56px); height: 3px; border-radius: 3px; background: #dce2e9; }
+.tracking-timeline li > i.complete { background: #ff6c1a; }
+.tracking-route-card { padding: 14px; }
+.tracking-map { position: relative; min-height: 315px; overflow: hidden; isolation: isolate; border-radius: 12px; background-color: #f1f5f3; background-image: linear-gradient(29deg, transparent 48%, #fff 48.6%, #fff 50.5%, transparent 51.1%), linear-gradient(112deg, transparent 46%, #fff 46.7%, #fff 48.4%, transparent 49.1%), linear-gradient(0deg, transparent 48%, #e3eaf0 48.7%, #e3eaf0 49.5%, transparent 50.2%), linear-gradient(90deg, transparent 48%, #e3eaf0 48.7%, #e3eaf0 49.5%, transparent 50.2%); background-size: 190px 130px, 235px 160px, 95px 80px, 125px 100px; }
+.tracking-map::before, .tracking-map::after { position: absolute; z-index: 0; content: ''; border-radius: 42% 58% 63% 37% / 36% 35% 65% 64%; background: rgba(195, 228, 192, .72); }
+.tracking-map::before { top: 3%; right: 8%; width: 21%; height: 31%; transform: rotate(23deg); }
+.tracking-map::after { bottom: -4%; left: 42%; width: 19%; height: 25%; transform: rotate(-18deg); }
+.map-block { position: absolute; z-index: 0; border: 7px solid rgba(255,255,255,.82); border-radius: 8px; background: rgba(227, 235, 228, .8); }
+.map-block-one { top: 15%; left: 16%; width: 13%; height: 20%; transform: rotate(-11deg); }
+.map-block-two { top: 21%; right: 30%; width: 11%; height: 18%; transform: rotate(13deg); }
+.map-block-three { bottom: 17%; left: 31%; width: 12%; height: 17%; transform: rotate(8deg); }
+.map-block-four { right: 10%; bottom: 19%; width: 13%; height: 21%; transform: rotate(-13deg); }
+.map-block-five { top: 8%; left: 51%; width: 10%; height: 19%; transform: rotate(-5deg); }
+.map-route { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; }
+.map-route-under { fill: none; stroke: rgba(255,255,255,.95); stroke-width: 13; stroke-linecap: round; stroke-linejoin: round; }
+.map-route-line { fill: none; stroke: #ff6818; stroke-width: 5; stroke-dasharray: 12 9; stroke-linecap: round; stroke-linejoin: round; }
+.map-marker { position: absolute; z-index: 2; width: 45px; height: 45px; display: grid; place-items: center; border: 3px solid #fff; border-radius: 50% 50% 50% 7px; background: #ff5a00; color: #fff; box-shadow: 0 4px 10px rgba(41, 48, 60, .18); transform: rotate(-45deg); }
+.map-marker svg { transform: rotate(45deg); }
+.restaurant-marker { top: 47%; left: 8%; }
+.home-marker { top: 31%; right: 8%; }
+.map-label { position: absolute; padding: 5px 8px; border-radius: 7px; background: rgba(255,255,255,.95); color: #263249; font-size: 10px; font-weight: 800; box-shadow: 0 2px 7px rgba(31,42,58,.08); }
+.restaurant-label { top: calc(47% + 50px); left: 5%; }
+.home-label { top: calc(31% + 50px); right: 4%; }
+.map-live-note { position: absolute; top: 13px; left: 13px; padding: 9px 11px; display: grid; grid-template-columns: 12px auto; align-items: center; gap: 2px 7px; border: 1px solid rgba(225,230,236,.9); border-radius: 10px; background: rgba(255,255,255,.95); color: #243149; font-size: 11px; font-weight: 800; box-shadow: 0 3px 12px rgba(25,39,55,.07); }
+.map-live-note small { grid-column: 2; color: #6c7890; font-size: 9px; font-weight: 500; }
+.map-live-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff5e1a; box-shadow: 0 0 0 4px #ffebe1; }
+.map-road-label { position: absolute; color: #97a2ad; font-size: 8px; font-weight: 700; letter-spacing: .08em; transform: rotate(-28deg); }
+.road-label-one { top: 26%; left: 40%; }.road-label-two { right: 22%; bottom: 20%; transform: rotate(21deg); }
+.tracking-rider-row { min-height: 70px; padding: 13px 3px 0; display: flex; align-items: center; gap: 11px; }
+.tracking-rider-icon { width: 45px; height: 45px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; background: #fff0e5; color: #f4510b; }
+.tracking-rider-row > div { min-width: 0; flex: 1; display: grid; gap: 4px; }
+.tracking-rider-row strong { color: #263249; font-size: 12px; }
+.tracking-rider-row small { color: #6d7990; font-size: 10px; }
+.tracking-rider-row > button { min-height: 37px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #ffad80; border-radius: 9px; background: #fff; color: #d94e06; font-size: 10px; font-weight: 800; }
+.tracking-summary-card, .tracking-address-card { padding: 15px; }
+.tracking-items { max-height: 300px; overflow: auto; }
+.tracking-items article { min-height: 66px; padding: 6px 0; display: grid; grid-template-columns: 49px minmax(0, 1fr) auto; align-items: center; gap: 9px; border-bottom: 1px solid #edf0f4; }
+.tracking-items img { width: 49px; height: 49px; border-radius: 9px; object-fit: cover; }
+.tracking-items article > div { min-width: 0; display: grid; gap: 4px; }
+.tracking-items article > div strong { overflow: hidden; color: #202b40; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.tracking-items article > div small, .tracking-items article > span { color: #66748c; font-size: 10px; }
+.tracking-items article > span { display: grid; gap: 4px; text-align: right; }
+.tracking-items article > span b { color: #253149; font-size: 11px; }
+.tracking-bill { margin-top: 10px; display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; color: #627088; font-size: 11px; }
+.tracking-bill b { color: #2b3850; text-align: right; }
+.tracking-bill strong { margin-top: 2px; padding: 10px; background: #fff4eb; color: #172033; font-size: 13px; }
+.tracking-bill strong:nth-last-child(2) { border-radius: 9px 0 0 9px; }
+.tracking-bill strong:last-child { border-radius: 0 9px 9px 0; color: #ed570a; text-align: right; }
+.tracking-payment-note { margin: 10px 0 0; color: #758198; font-size: 10px; }
+.tracking-address { display: flex; align-items: flex-start; gap: 11px; }
+.tracking-address > span { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 11px; background: #fff0e5; color: #f4510b; }
+.tracking-address > div { min-width: 0; display: grid; gap: 5px; }
+.tracking-address strong { color: #202b40; font-size: 12px; }
+.tracking-address small { color: #68768d; font-size: 10px; }
+.tracking-address p { margin: 1px 0 0; display: flex; gap: 5px; color: #4e5c73; font-size: 10px; line-height: 1.45; }
+.tracking-address p svg { flex: 0 0 auto; color: #f4510b; }
+.tracking-order-id { min-height: 37px; margin-top: 12px; padding-top: 10px; display: flex; align-items: center; gap: 7px; border-top: 1px solid #edf0f4; color: #6b7890; font-size: 10px; }
+.tracking-order-id svg { color: #f4510b; }
+.tracking-order-id strong { margin-left: auto; color: #253149; font-size: 11px; }
+.tracking-contact-button { width: 100%; min-height: 38px; margin-top: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #ffad80; border-radius: 9px; background: #fff; color: #d94e06; font-size: 10px; font-weight: 800; }
+@media (max-width: 1100px) { .delivery-tracking-grid { grid-template-columns: minmax(0, 1fr); max-width: 850px; } .tracking-side-column { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+@media (max-width: 650px) {
+  .delivery-tracking-area { min-height: 100dvh; padding: 11px 12px 24px; }
+  .tracking-topbar { min-height: 66px; margin-bottom: 9px; gap: 9px; }
+  .tracking-topbar > button { width: 35px; height: 35px; }
+  .tracking-topbar h1 { font-size: 21px; }
+  .tracking-topbar p { max-width: 33ch; font-size: 10px; }
+  .tracking-estimate { min-width: 106px; min-height: 51px; padding: 6px; grid-template-columns: 19px auto; column-gap: 4px; }
+  .tracking-estimate svg { width: 18px; }
+  .tracking-estimate small { font-size: 8px; }
+  .tracking-estimate strong { font-size: 11px; }
+  .tracking-main-column, .tracking-side-column { gap: 10px; }
+  .tracking-side-column { grid-template-columns: minmax(0, 1fr); }
+  .tracking-timeline-card, .tracking-route-card, .tracking-summary-card, .tracking-address-card { padding: 12px; border-radius: 13px; }
+  .tracking-panel-heading { align-items: flex-start; }
+  .tracking-panel-heading h2 { font-size: 13px; }
+  .tracking-panel-heading > span { font-size: 8px; }
+  .tracking-timeline-card .tracking-panel-heading > span svg { width: 13px; }
+  .tracking-timeline { margin-top: 16px; }
+  .tracking-step-icon { width: 35px; height: 35px; }
+  .tracking-step-icon svg { width: 17px; }
+  .tracking-timeline li > i { top: 16px; left: calc(50% + 21px); width: calc(100% - 42px); }
+  .tracking-timeline li > strong { font-size: 9px; }
+  .tracking-timeline li > small { font-size: 8px; }
+  .tracking-timeline li > p { font-size: 8px; }
+  .tracking-map { min-height: 225px; }
+  .tracking-map .map-live-note { top: 8px; left: 8px; padding: 7px; font-size: 9px; }
+  .map-marker { width: 37px; height: 37px; }
+  .map-marker svg { width: 17px; }
+  .map-label { font-size: 8px; }
+  .tracking-rider-row { gap: 8px; }
+  .tracking-rider-row > button { min-height: 33px; padding-inline: 8px; font-size: 9px; }
+}

@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { gsap } from 'gsap'
 import {
   ArrowRight, ArrowUpDown, BadgePercent, CalendarDays, Check, CheckCircle2, ChefHat, CircleHelp, CreditCard,
   ChartNoAxesColumnIncreasing, ChevronDown, ChevronLeft, ChevronRight,
-  CircleX, Clock3, Coffee, FileText,
-  ConciergeBell, Eye, Flame, Grid2X2, Headphones, House, Mail, MessageCircle, Minus,
-  List, PackageCheck, Pencil, Plus, Search, Send, ShoppingCart, SlidersHorizontal,
-  Leaf, LifeBuoy, Sparkles, Star, Tag, Trash2, Truck, Users, Utensils, X,
+  CircleX, Clock3, Coffee, Eye, EyeOff, FileText,
+  ConciergeBell, Flame, Grid2X2, Headphones, House, LockKeyhole, Mail, MessageCircle, Minus,
+  List, PackageCheck, Pencil, Plus, Search, Send, Shield, ShieldCheck, ShoppingCart, SlidersHorizontal,
+  Leaf, LifeBuoy, Menu, Sparkles, Star, Tag, Trash2, Truck, Users, Utensils, X,
 } from 'lucide-react'
 import './App.css'
 import BellAnimation from './BellAnimation.jsx'
 import DineInPaymentPage from './DineInPaymentPage.jsx'
+import DeliveryCheckoutPage from './DeliveryCheckoutPage.jsx'
+import DeliveryConfirmationPage from './DeliveryConfirmationPage.jsx'
+import DeliveryTrackingPage from './DeliveryTrackingPage.jsx'
+import ProductDetailsModal from './components/ProductDetailsModal.jsx'
 
 const dishes = [
   { id: 1, name: 'Paneer Tikka', category: 'Starters', price: 220, oldPrice: 260, off: '15% OFF', veg: true, popular: true, description: 'Marinated cottage cheese grilled to perfection.', image: 'photo-1567188040759-fb8a883dc6d8' },
@@ -29,6 +34,25 @@ const dishes = [
   { id: 15, name: 'Veg Spring Rolls', category: 'Starters', price: 160, veg: true, description: 'Golden rolls packed with crunchy vegetables.', image: 'photo-1544025162-d76694265947' },
   { id: 16, name: 'Dal Makhani', category: 'Main Course', price: 240, veg: true, description: 'Slow-cooked black lentils with a buttery finish.', image: 'photo-1546833999-b9f581a1996d' },
 ]
+
+const productDetails = {
+  1: { rating: '4.4', reviews: '120+', detailDescription: 'Marinated cottage cheese cubes grilled to perfection with aromatic spices, served with mint chutney and onion salad.', ingredients: ['Paneer', 'Yogurt', 'Bell peppers', 'Onion', 'Spices', 'Herbs'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  2: { rating: '4.4', reviews: '96+', detailDescription: 'Crisp golden dosa filled with seasoned potato masala, served with sambar and coconut chutney.', ingredients: ['Rice', 'Lentils', 'Potato', 'Coconut chutney', 'Spices'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  3: { rating: '4.6', reviews: '184+', detailDescription: 'Fragrant basmati rice layered with tender chicken, warming spices and fresh herbs.', ingredients: ['Basmati rice', 'Chicken', 'Yogurt', 'Onion', 'Spices', 'Herbs'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  4: { rating: '4.3', reviews: '73+', detailDescription: 'Crispy golden potato fries, lightly seasoned and served with ketchup.', ingredients: ['Potato', 'Seasoning', 'Ketchup'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  5: { rating: '4.5', reviews: '108+', detailDescription: 'A hearty farmhouse pizza topped with garden vegetables and bubbling cheese.', ingredients: ['Pizza dough', 'Tomato', 'Mozzarella', 'Garden vegetables', 'Herbs'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  6: { rating: '4.4', reviews: '91+', detailDescription: 'Grilled chicken burger layered with crisp lettuce and house sauce.', ingredients: ['Chicken', 'Burger bun', 'Lettuce', 'Sauce'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  7: { rating: '4.3', reviews: '62+', detailDescription: 'Toasted bread brushed with garlic and herbs for a crisp, savory bite.', ingredients: ['Bread', 'Garlic', 'Butter', 'Herbs'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  8: { rating: '4.6', reviews: '143+', detailDescription: 'Rich chocolate brownie served with smooth vanilla ice cream.', ingredients: ['Chocolate', 'Cocoa', 'Flour', 'Vanilla ice cream'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  9: { rating: '4.4', reviews: '87+', detailDescription: 'Creamy Alfredo pasta finished with parmesan and fresh herbs.', ingredients: ['Pasta', 'Cream', 'Parmesan', 'Herbs'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  10: { rating: '4.5', reviews: '119+', detailDescription: 'Soft paneer simmered in a rich, gently spiced tomato and butter gravy.', ingredients: ['Paneer', 'Tomato', 'Butter', 'Cream', 'Spices'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  11: { rating: '4.5', reviews: '102+', detailDescription: 'Smoky tandoori chicken marinated with warming spices and grilled until tender.', ingredients: ['Chicken', 'Yogurt', 'Tandoori spices', 'Lemon'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  12: { rating: '4.3', reviews: '78+', detailDescription: 'Chilled coffee blended smooth and topped with creamy foam.', ingredients: ['Coffee', 'Milk', 'Sugar', 'Cream'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  13: { rating: '4.5', reviews: '88+', detailDescription: 'Sweet mango blended with cool, creamy yogurt for a refreshing drink.', ingredients: ['Mango', 'Yogurt', 'Milk', 'Sugar'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  14: { rating: '4.4', reviews: '96+', detailDescription: 'Soft khoya dumplings soaked in fragrant sugar syrup.', ingredients: ['Khoya', 'Flour', 'Sugar syrup', 'Cardamom'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  15: { rating: '4.3', reviews: '66+', detailDescription: 'Golden crispy rolls packed with crunchy vegetables and served with dipping sauce.', ingredients: ['Wrapper', 'Cabbage', 'Carrot', 'Vegetables', 'Dipping sauce'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+  16: { rating: '4.5', reviews: '112+', detailDescription: 'Slow-cooked black lentils simmered until rich, creamy and full of flavor.', ingredients: ['Black lentils', 'Tomato', 'Butter', 'Cream', 'Spices'], allergens: 'Allergen details are not available. Please confirm with the restaurant.' },
+}
 
 const categories = [
   { name: 'All', icon: Grid2X2 },
@@ -166,6 +190,28 @@ function ListIcon() {
   return <List size={19} />
 }
 
+function AdminLoginPage({ onBack }) {
+  const [showPassword, setShowPassword] = useState(false)
+  const [message, setMessage] = useState('')
+
+  return <main className="admin-login-area">
+    <section className="admin-login-card" aria-labelledby="admin-login-title">
+      <div className="admin-login-brand"><span className="admin-brand-mark"><ChefHat size={39} strokeWidth={2} /></span><span><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></div>
+      <header className="admin-login-heading"><h1 id="admin-login-title">Admin Login</h1><p>Login to manage your restaurant</p></header>
+      <form onSubmit={(event) => { event.preventDefault(); setMessage('Admin authentication is not configured for this site yet.') }}>
+        <label className="admin-login-field"><Mail size={24} aria-hidden="true" /><span><small>Email Address</small><input type="email" autoComplete="username" placeholder="admin@tastybites.com" required /></span></label>
+        <label className="admin-login-field"><LockKeyhole size={24} aria-hidden="true" /><span><small>Password</small><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" required /></span><button type="button" className="admin-password-toggle" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <Eye size={21} /> : <EyeOff size={21} />}</button></label>
+        <div className="admin-login-options"><label><input type="checkbox" /> <span>Remember me</span></label><button type="button" onClick={() => setMessage('Password recovery is not configured yet. Please contact your administrator.')}>Forgot Password?</button></div>
+        <button className="admin-sign-in-button" type="submit">Login <ArrowRight size={25} /></button>
+      </form>
+      {message && <p className="admin-login-message" role="status">{message}</p>}
+      <div className="admin-login-divider"><span>OR</span></div>
+      <button type="button" className="admin-security-key" onClick={() => setMessage('Security key sign-in is not configured yet.')}><ShieldCheck size={22} />Login with Security Key<ChevronRight size={19} /></button>
+      <button type="button" className="admin-back-menu" onClick={onBack}>Back to customer menu</button>
+    </section>
+  </main>
+}
+
 function App() {
   const [category, setCategory] = useState('All')
   const [query, setQuery] = useState('')
@@ -174,11 +220,14 @@ function App() {
   const [menuFacetFilters, setMenuFacetFilters] = useState({ diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
   const [menuSort, setMenuSort] = useState('recommended')
   const [cart, setCart] = useState({})
+  const [selectedProduct, setSelectedProduct] = useState(null)
   const [orderType, setOrderType] = useState('Dine-in')
   const [instructions, setInstructions] = useState('')
   const [notice, setNotice] = useState('')
   const [cartOpen, setCartOpen] = useState(false)
-  const [page, setPage] = useState('menu')
+  const cartIconRef = useRef(null)
+  const [page, setPage] = useState(window.location.pathname === '/admin/login' ? 'adminLogin' : 'menu')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [orderQuery, setOrderQuery] = useState('')
   const [orderTypeFilter, setOrderTypeFilter] = useState('All')
   const [placedOrders, setPlacedOrders] = useState([])
@@ -209,12 +258,39 @@ function App() {
   const [checkoutError, setCheckoutError] = useState('')
   const [paymentSession, setPaymentSession] = useState(null)
   const [placedOrder, setPlacedOrder] = useState(null)
+  const [deliveryPlacedOrder, setDeliveryPlacedOrder] = useState(null)
   const checkoutRequestLock = useRef(false)
   const checkoutRequestKey = useRef(null)
   const qrParams = new URLSearchParams(window.location.search)
   const qrTableId = qrParams.get('table') || qrParams.get('tableNo') || window.sessionStorage.getItem('tableId') || window.sessionStorage.getItem('tableNo') || ''
   const checkoutTableNumber = qrTableId || '5'
   const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'hello@tastybites.example'
+
+  useEffect(() => {
+    const syncAdminRoute = () => setPage(window.location.pathname === '/admin/login' ? 'adminLogin' : 'menu')
+    window.addEventListener('popstate', syncAdminRoute)
+    return () => window.removeEventListener('popstate', syncAdminRoute)
+  }, [])
+
+  const openAdminLogin = () => {
+    if (window.location.pathname !== '/admin/login') window.history.pushState({}, '', '/admin/login')
+    setPage('adminLogin')
+    setMobileMenuOpen(false)
+    setCartOpen(false)
+  }
+
+  const returnToMenu = () => {
+    if (window.location.pathname === '/admin/login') window.history.pushState({}, '', '/')
+    setPage('menu')
+    setMobileMenuOpen(false)
+  }
+
+  const navigateToCustomerPage = (nextPage) => {
+    if (window.location.pathname === '/admin/login') window.history.pushState({}, '', '/')
+    setPage(nextPage)
+    setCartOpen(false)
+    setMobileMenuOpen(false)
+  }
 
   const submitSupportMessage = (event) => {
     event.preventDefault()
@@ -317,11 +393,17 @@ function App() {
   const itemCount = cartEntries.reduce((total, dish) => total + cart[dish.id], 0)
   const subtotal = cartEntries.reduce((total, dish) => total + dish.price * cart[dish.id], 0)
   const tax = Math.round(subtotal * 0.05)
+  const deliveryFee = 30
+  const deliveryTotal = subtotal + tax + deliveryFee
   const setQuantity = (id, delta, offer = null) => {
     const nextQuantity = Math.max(0, (cart[id] || 0) + delta)
     setCart((current) => ({ ...current, [id]: Math.max(0, (current[id] || 0) + delta) }))
     if (offer) setCartPriceOverrides((current) => ({ ...current, [id]: { name: offer.name, price: offer.price, description: offer.description, offerOriginalPrice: offer.originalPrice } }))
     else if (!nextQuantity) setCartPriceOverrides((current) => { const next = { ...current }; delete next[id]; return next })
+  }
+  const addProductFromDetails = (product, quantity) => {
+    setQuantity(product.id, quantity)
+    if (cartIconRef.current) gsap.fromTo(cartIconRef.current, { scale: 1, rotate: 0 }, { scale: 1.22, rotate: -7, duration: .14, yoyo: true, repeat: 1, ease: 'power2.out' })
   }
   const clearCart = () => { setCart({}); setCartPriceOverrides({}) }
 
@@ -380,10 +462,28 @@ function App() {
       setCartOpen(false)
       return
     }
-    setNotice(`Order placed for ${itemCount} ${itemCount === 1 ? 'item' : 'items'} · ${orderType}`)
+    setCheckoutError('')
+    checkoutRequestKey.current = null
+    setPage('deliveryCheckout')
+    setCartOpen(false)
+  }
+
+  const submitDeliveryOrder = (event) => {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    setCheckoutError('')
+    const address = { fullName: form.get('fullName'), phone: form.get('phone'), house: form.get('house'), street: form.get('street'), city: form.get('city'), pincode: form.get('pincode') }
+    const placedAt = new Date().toISOString()
+    const orderId = `TB${Math.floor(100000 + Math.random() * 900000)}`
+    const snapshot = checkoutSnapshot()
+    const order = { orderId, items: snapshot, itemCount, subtotal, deliveryFee, tax, total: deliveryTotal, paymentMethod: 'payment_later', paymentStatus: 'pending', orderStatus: 'placed', deliveryAddress: address, deliveryNotes: form.get('deliveryNotes'), placedAt }
+    const date = new Date(placedAt)
+    setDeliveryPlacedOrder(order)
+    const historyOrder = { id: orderId, type: 'Home Delivery', place: `${address.house}, ${address.street}, ${address.city} ${address.pincode}`, items: snapshot.flatMap((item) => Array.from({ length: item.quantity }, () => item.id)), extra: 0, amount: deliveryTotal, date: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }), time: date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }), status: 'Placed' }
+    setPlacedOrders((current) => [historyOrder, ...current.filter((existing) => existing.id !== historyOrder.id)])
     clearCart()
     setInstructions('')
-    window.setTimeout(() => setNotice(''), 3800)
+    setPage('deliveryConfirmation')
   }
 
   const checkoutSnapshot = () => cartEntries.map((item) => ({ id: item.id, name: item.name, quantity: cart[item.id], price: item.price, image: item.image }))
@@ -501,28 +601,41 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${page === 'orders' ? 'orders-mode' : ''} ${page === 'offers' ? 'offers-mode' : ''} ${page === 'waiter' ? 'waiter-mode' : ''} ${page === 'help' ? 'help-mode' : ''} ${['payment', 'onlinePayment', 'confirmation'].includes(page) ? 'checkout-mode' : ''}`}>
+    <div className={`app-shell ${page === 'orders' ? 'orders-mode' : ''} ${page === 'offers' ? 'offers-mode' : ''} ${page === 'waiter' ? 'waiter-mode' : ''} ${page === 'help' ? 'help-mode' : ''} ${page === 'adminLogin' ? 'admin-login-mode' : ''} ${['payment', 'onlinePayment', 'confirmation', 'deliveryCheckout', 'deliveryConfirmation', 'deliveryTracking'].includes(page) ? 'checkout-mode' : ''}`}>
       <aside className="sidebar">
         <a className="brand" href="#menu" aria-label="Tasty Bites home">
           <span className="brand-mark"><ChefHat size={27} strokeWidth={2.1} /></span>
           <span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span>
         </a>
         <nav className="side-nav" aria-label="Main navigation">
-          <button className={`side-link ${page === 'menu' || ['payment', 'onlinePayment', 'confirmation'].includes(page) ? 'active' : ''}`} onClick={() => { setPage('menu'); setCartOpen(false) }}><Grid2X2 size={19} /><span>Menu</span></button>
-          <button className={`side-link ${page === 'orders' ? 'active' : ''}`} onClick={() => { setPage('orders'); setOrdersPage(1); setCartOpen(false) }}><Clock3 size={19} /><span>My Orders</span></button>
-          <button className={`side-link ${page === 'offers' ? 'active' : ''}`} onClick={() => { setPage('offers'); setCartOpen(false) }}><BadgePercent size={19} /><span>Offers</span><span className="nav-new">{offerCounts.all}</span></button>
-          <button className={`side-link ${page === 'waiter' ? 'active' : ''}`} onClick={() => { setPage('waiter'); setCartOpen(false) }}><ConciergeBell size={19} /><span>Call Waiter</span></button>
-          <button className={`side-link ${page === 'help' ? 'active' : ''}`} onClick={() => { setPage('help'); setCartOpen(false) }}><Headphones size={19} /><span>Help &amp; Support</span></button>
+          <button className={`side-link ${page === 'menu' || ['payment', 'onlinePayment', 'confirmation', 'deliveryCheckout', 'deliveryConfirmation'].includes(page) ? 'active' : ''}`} onClick={() => navigateToCustomerPage('menu')}><Grid2X2 size={19} /><span>Menu</span></button>
+          <button className={`side-link ${page === 'orders' ? 'active' : ''}`} onClick={() => { setOrdersPage(1); navigateToCustomerPage('orders') }}><Clock3 size={19} /><span>My Orders</span></button>
+          <button className={`side-link ${page === 'offers' ? 'active' : ''}`} onClick={() => navigateToCustomerPage('offers')}><BadgePercent size={19} /><span>Offers</span><span className="nav-new">{offerCounts.all}</span></button>
+          <button className={`side-link ${page === 'waiter' ? 'active' : ''}`} onClick={() => navigateToCustomerPage('waiter')}><ConciergeBell size={19} /><span>Call Waiter</span></button>
+          <button className={`side-link ${page === 'help' ? 'active' : ''}`} onClick={() => navigateToCustomerPage('help')}><Headphones size={19} /><span>Help &amp; Support</span></button>
         </nav>
         <section className="table-card" id="table" aria-label="Table information">
           <div className="table-top"><span><Users size={18} /> Table No. 5</span><button className="icon-button subtle" aria-label="Edit table"><Pencil size={16} /></button></div>
           <p><Clock3 size={17} /> 10:00 AM – 11:00 PM</p>
           <p className="open-status"><span /> Open Now</p>
         </section>
+        <button type="button" className="admin-login-link" onClick={openAdminLogin}><Shield size={18} strokeWidth={2.1} /><span>Admin Login</span><ArrowRight size={15} className="admin-login-arrow" /></button>
       </aside>
 
-      {page === 'offers' ? <main className="offers-area" id="offers">
-        <div className="mobile-brand"><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
+      {mobileMenuOpen && <div className="mobile-nav-backdrop" onClick={() => setMobileMenuOpen(false)}>
+        <nav className="mobile-drawer" aria-label="Mobile navigation" onClick={(event) => event.stopPropagation()}>
+          <div className="mobile-drawer-heading"><span className="brand-mark"><ChefHat size={22} /></span><strong>Tasty <i>Bites</i></strong><button type="button" className="icon-button" aria-label="Close navigation" onClick={() => setMobileMenuOpen(false)}><X size={19} /></button></div>
+          <button type="button" className="mobile-drawer-link" onClick={() => navigateToCustomerPage('menu')}><Grid2X2 size={18} />Menu</button>
+          <button type="button" className="mobile-drawer-link" onClick={() => { setOrdersPage(1); navigateToCustomerPage('orders') }}><Clock3 size={18} />My Orders</button>
+          <button type="button" className="mobile-drawer-link" onClick={() => navigateToCustomerPage('offers')}><BadgePercent size={18} />Offers</button>
+          <button type="button" className="mobile-drawer-link" onClick={() => navigateToCustomerPage('waiter')}><ConciergeBell size={18} />Call Waiter</button>
+          <button type="button" className="mobile-drawer-link" onClick={() => navigateToCustomerPage('help')}><Headphones size={18} />Help &amp; Support</button>
+          <button type="button" className="mobile-drawer-admin" onClick={openAdminLogin}><Shield size={18} />Admin Login</button>
+        </nav>
+      </div>}
+
+      {page === 'adminLogin' ? <AdminLoginPage onBack={returnToMenu} /> : page === 'offers' ? <main className="offers-area" id="offers">
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
         <div className="mobile-page-nav offers-mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button onClick={() => setPage('orders')}>My Orders</button><button className="selected" onClick={() => setPage('offers')}>Offers</button></div>
         <div className="offers-topbar">
           <label className="offers-search"><Search size={20} /><input value={offersSearch} onChange={(event) => setOffersSearch(event.target.value)} placeholder="Search for dishes..." aria-label="Search offers" />{offersSearch && <button className="icon-button subtle" onClick={() => setOffersSearch('')} aria-label="Clear offer search"><X size={16} /></button>}</label>
@@ -533,7 +646,7 @@ function App() {
           {!visibleOffers.length && <div className="offers-empty"><Search size={25} /><h2>No offers found</h2><p>Try another search or switch to a different offer filter.</p><button onClick={() => { setOffersSearch(''); setOfferFilter('All Offers') }}>Show all offers</button></div>}
         </div>
       </main> : page === 'menu' ? <main className="menu-area" id="menu">
-        <div className="mobile-brand"><a className="brand" href="#menu"><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => setCartOpen(true)} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu"><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => setCartOpen(true)} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
         <div className="mobile-page-nav"><button className="selected" onClick={() => setPage('menu')}>Menu</button><button onClick={() => setPage('orders')}>My Orders</button></div>
         <div className="search-row">
           <label className="search-box"><Search size={20} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search for dishes..." aria-label="Search dishes" />{query && <button aria-label="Clear search" className="icon-button subtle" onClick={() => setQuery('')}><X size={16} /></button>}</label>
@@ -553,7 +666,7 @@ function App() {
         <div className="section-heading"><div><h1>{category === 'All' ? 'All Items' : category}</h1><p>Fresh from our kitchen, made just for you.</p></div><span className="item-count">{visibleDishes.length} items</span></div>
         <div className="product-grid">
           {visibleDishes.map((dish) => (
-            <article className="product-card" key={dish.id}>
+            <article className="product-card" key={dish.id} tabIndex={0} aria-label={`View details for ${dish.name}`} aria-haspopup="dialog" onClick={(event) => { event.currentTarget.focus({ preventScroll: true }); setSelectedProduct({ ...dish, ...productDetails[dish.id] }) }} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); setSelectedProduct({ ...dish, ...productDetails[dish.id] }) } }}>
               <div className="product-photo-wrap">
                 <img className="product-photo" src={photo(dish.image, 1400)} alt={dish.name} loading={dish.id > 4 ? 'lazy' : 'eager'} decoding="async" />
                 <span className={`diet-mark ${dish.veg ? 'veg' : 'nonveg'}`} title={dish.veg ? 'Vegetarian' : 'Non-vegetarian'}>{dish.veg ? <span /> : <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11 10H1L6 1Z" /></svg>}</span>
@@ -561,13 +674,13 @@ function App() {
                 {dish.off && <span className="discount-ribbon-wrap"><i className="discount-ribbon-tail" aria-hidden="true" /><span className="discount-ribbon"><b>{dish.off}</b></span></span>}
                 {dish.popular && <span className="popular-tag"><Flame size={12} fill="currentColor" /> Popular</span>}
               </div>
-              <div className="product-copy"><h2>{dish.name}</h2><p>{dish.description}</p><div className="product-footer"><div className="price-stack"><strong>{money(dish.price)}</strong>{dish.oldPrice && <del>{money(dish.oldPrice)}</del>}</div>{cart[dish.id] ? <div className="quantity-control" aria-label={`${dish.name} quantity`}><button onClick={() => setQuantity(dish.id, -1)} aria-label={`Remove one ${dish.name}`}><Minus size={15} /></button><span>{cart[dish.id]}</span><button onClick={() => setQuantity(dish.id, 1)} aria-label={`Add one ${dish.name}`}><Plus size={15} /></button></div> : <button className="add-button" onClick={() => setQuantity(dish.id, 1)}>Add <Plus size={15} strokeWidth={2.5} /></button>}</div></div>
+              <div className="product-copy"><h2>{dish.name}</h2><p>{dish.description}</p><div className="product-footer"><div className="price-stack"><strong>{money(dish.price)}</strong>{dish.oldPrice && <del>{money(dish.oldPrice)}</del>}</div>{cart[dish.id] ? <div className="quantity-control" aria-label={`${dish.name} quantity`}><button onClick={(event) => { event.stopPropagation(); setQuantity(dish.id, -1) }} aria-label={`Remove one ${dish.name}`}><Minus size={15} /></button><span>{cart[dish.id]}</span><button onClick={(event) => { event.stopPropagation(); setQuantity(dish.id, 1) }} aria-label={`Add one ${dish.name}`}><Plus size={15} /></button></div> : <button className="add-button" onClick={(event) => { event.stopPropagation(); setQuantity(dish.id, 1) }}>Add <Plus size={15} strokeWidth={2.5} /></button>}</div></div>
             </article>
           ))}
           {!visibleDishes.length && <div className="empty-menu"><span><Search size={23} /></span><h2>No dishes found</h2><p>Try another search or choose a different category.</p><button onClick={() => { setQuery(''); setCategory('All'); const empty = { diet: 'all', cuisine: 'all', price: 'all', rating: 'all' }; setMenuFilterDraft(empty); setMenuFacetFilters(empty); setMenuSort('recommended') }}>Show all dishes</button></div>}
         </div>
         <footer className="menu-footer"><span>Good food, good mood.</span><span>Made with care <i>at Tasty Bites</i></span></footer>
-      </main> : ['payment', 'onlinePayment', 'confirmation'].includes(page) ? <DineInPaymentPage
+      </main> : page === 'deliveryCheckout' ? <DeliveryCheckoutPage items={cartEntries.map((item) => ({ ...item, quantity: cart[item.id] }))} itemCount={itemCount} subtotal={subtotal} tax={tax} deliveryFee={deliveryFee} total={deliveryTotal} formatMoney={money} onBack={backToCart} onPlaceOrder={submitDeliveryOrder} loading={checkoutLoading} error={checkoutError} /> : page === 'deliveryConfirmation' ? <DeliveryConfirmationPage order={deliveryPlacedOrder} formatMoney={money} onTrack={() => setPage('deliveryTracking')} onSupport={() => setPage('help')} /> : page === 'deliveryTracking' ? <DeliveryTrackingPage order={deliveryPlacedOrder} formatMoney={money} onBack={() => setPage('deliveryConfirmation')} onSupport={() => setPage('help')} /> : ['payment', 'onlinePayment', 'confirmation'].includes(page) ? <DineInPaymentPage
         stage={page}
         items={cartEntries.map((item) => ({ ...item, quantity: cart[item.id] }))}
         itemCount={itemCount}
@@ -590,7 +703,7 @@ function App() {
         placedOrder={placedOrder}
         formatMoney={money}
       /> : page === 'help' ? <main className="help-area" id="help">
-        <div className="mobile-brand"><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a></div>
         <div className="mobile-page-nav offers-mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button onClick={() => { setPage('orders'); setOrdersPage(1) }}>My Orders</button><button className="selected" onClick={() => setPage('help')}>Help</button></div>
         <header className="help-heading"><h1>Help &amp; <em>Support</em></h1><p>Have a question or need assistance? We’re always ready to help you.</p></header>
         <div className="help-main-grid">
@@ -623,7 +736,7 @@ function App() {
           <div className="help-topic-grid">{helpTopics.map(({ title, description, icon: Icon, tone, subject }) => <button key={title} className={`help-topic ${tone}`} onClick={() => selectSupportTopic(subject)}><span className="help-topic-icon"><Icon size={23} /></span><span className="help-topic-copy"><strong>{title}</strong><small>{description}</small></span><ChevronRight size={19} /></button>)}</div>
         </section>
       </main> : page === 'waiter' ? <main className="waiter-area" id="waiter">
-        <div className="mobile-brand"><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
         <div className="mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button onClick={() => setPage('orders')}>My Orders</button><button className="selected" onClick={() => setPage('waiter')}>Call Waiter</button></div>
         <section className="waiter-card" aria-labelledby="waiter-title">
           <BellAnimation ringing={bellRinging} />
@@ -638,7 +751,7 @@ function App() {
           </div>
         </section>
       </main> : <main className="orders-area" id="orders">
-        <div className="mobile-brand"><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
         <div className="mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button className="selected" onClick={() => setPage('orders')}>My Orders</button></div>
         <div className="orders-toolbar"><label className="orders-search"><Search size={19} /><input value={orderQuery} onChange={(event) => { setOrderQuery(event.target.value); setOrdersPage(1) }} placeholder="Search by Order ID, Table No, or items..." aria-label="Search orders" />{orderQuery && <button className="icon-button subtle" aria-label="Clear search" onClick={() => setOrderQuery('')}><X size={16} /></button>}</label><label className="date-select"><CalendarDays size={18} /><select value={dateRange} onChange={(event) => setDateRange(event.target.value)} aria-label="Date range"><option>Last 30 days</option><option>Last 7 days</option><option>All time</option></select><ChevronDown size={15} /></label></div>
         <header className="orders-heading"><h1>My Orders</h1><p>View and track all your restaurant orders</p></header>
@@ -653,8 +766,8 @@ function App() {
         <div className="orders-pagination"><span>Showing {filteredOrders.length ? (ordersPage - 1) * 10 + 1 : 0}–{Math.min(ordersPage * 10, filteredOrders.length)} of {filteredOrders.length} orders</span><div><button aria-label="Previous page" disabled={ordersPage === 1} onClick={() => setOrdersPage((n) => n - 1)}><ChevronLeft size={18} /></button>{filteredOrders.length > 10 ? <><button className={ordersPage === 1 ? 'page-current' : ''} aria-current={ordersPage === 1 ? 'page' : undefined} onClick={() => setOrdersPage(1)}>1</button><button className={ordersPage === 2 ? 'page-current' : ''} aria-current={ordersPage === 2 ? 'page' : undefined} onClick={() => setOrdersPage(2)}>2</button></> : <button className="page-current" aria-current="page">1</button>}<button aria-label="Next page" disabled={ordersPage * 10 >= filteredOrders.length} onClick={() => setOrdersPage((n) => n + 1)}><ChevronRight size={18} /></button></div></div>
       </main>}
 
-      <aside className={`cart-panel ${cartOpen ? 'cart-panel-open' : ''} ${page === 'orders' || page === 'help' || ['payment', 'onlinePayment', 'confirmation'].includes(page) ? 'cart-panel-hidden' : ''}`} id="cart" aria-label="Your cart">
-        <div className="cart-header"><div><span className="cart-icon"><ShoppingCart size={24} /></span><h2>Your Cart <small>({itemCount} {itemCount === 1 ? 'item' : 'items'})</small></h2></div><div className="cart-header-actions">{itemCount > 0 && <button className="clear-button" onClick={clearCart}><Trash2 size={15} /> Clear All</button>}<button className="icon-button close-cart" aria-label="Close cart" onClick={() => setCartOpen(false)}><X size={19} /></button></div></div>
+      <aside className={`cart-panel ${cartOpen ? 'cart-panel-open' : ''} ${page === 'orders' || page === 'help' || page === 'adminLogin' || ['payment', 'onlinePayment', 'confirmation', 'deliveryCheckout', 'deliveryConfirmation', 'deliveryTracking'].includes(page) ? 'cart-panel-hidden' : ''}`} id="cart" aria-label="Your cart">
+        <div className="cart-header"><div><span className="cart-icon" ref={cartIconRef}><ShoppingCart size={24} /></span><h2>Your Cart <small>({itemCount} {itemCount === 1 ? 'item' : 'items'})</small></h2></div><div className="cart-header-actions">{itemCount > 0 && <button className="clear-button" onClick={clearCart}><Trash2 size={15} /> Clear All</button>}<button className="icon-button close-cart" aria-label="Close cart" onClick={() => setCartOpen(false)}><X size={19} /></button></div></div>
         <div className="cart-content">
           <div className="cart-scroll">
           {cartEntries.length ? <div className="cart-items">{cartEntries.map((dish) => <article className="cart-item" key={dish.id}><img src={photo(dish.image, 180)} alt="" /><div className="cart-item-main"><div className="cart-item-title"><div><h3>{dish.name}</h3><strong>{money(dish.price)}</strong></div><button className="remove-item" aria-label={`Remove ${dish.name}`} onClick={() => setQuantity(dish.id, -cart[dish.id])}><Trash2 size={17} /></button></div><p>{dish.description}</p><div className="quantity-control cart-quantity"><button onClick={() => setQuantity(dish.id, -1)} aria-label={`Remove one ${dish.name}`}><Minus size={14} /></button><span>{cart[dish.id]}</span><button onClick={() => setQuantity(dish.id, 1)} aria-label={`Add one ${dish.name}`}><Plus size={14} /></button></div></div></article>)}</div> : <div className="cart-empty"><span><ShoppingCart size={26} /></span><h3>Your cart is waiting</h3><p>Add something delicious from the menu.</p></div>}
@@ -676,6 +789,7 @@ function App() {
         </div>
       </aside>
       {cartOpen && <button className="cart-scrim" aria-label="Close cart overlay" onClick={() => setCartOpen(false)} />}
+      {selectedProduct && <ProductDetailsModal key={selectedProduct.id} product={{ ...selectedProduct, rating: selectedProduct.rating || '4.4', reviews: selectedProduct.reviews || '100+' }} quantityInCart={cart[selectedProduct.id] || 0} onAddToCart={addProductFromDetails} onClose={() => setSelectedProduct(null)} />}
       {selectedOrder && <div className="order-modal-backdrop" onClick={() => setSelectedOrder(null)}><section className="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title" onClick={(event) => event.stopPropagation()}><button className="icon-button modal-close" onClick={() => setSelectedOrder(null)} aria-label="Close order details"><X size={19} /></button><span className="modal-order-icon"><PackageCheck size={25} /></span><h2 id="order-modal-title">Order #{selectedOrder.id}</h2><StatusBadge status={selectedOrder.status} /><div className="modal-meta"><span>{selectedOrder.type}</span><span>{selectedOrder.place}</span><span>{selectedOrder.date} · {selectedOrder.time}</span></div><div className="modal-dishes">{selectedOrder.items.map((dishId, index) => { const dish = cartProducts.find((item) => item.id === dishId); return <div key={`${dishId}-${index}`}><img src={photo(dish.image, 100)} alt="" /><span>{dish.name}</span><strong>{money(dish.price)}</strong></div> })}</div><div className="modal-total"><span>Order total</span><strong>{money(selectedOrder.amount)}</strong></div><button className="modal-done" onClick={() => setSelectedOrder(null)}>Done</button></section></div>}
       {notice && <div className="toast" role="status"><span><Check size={16} /></span>{notice}</div>}
     </div>

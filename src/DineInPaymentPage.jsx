@@ -3,6 +3,8 @@ import {
   QrCode, Store, Utensils, LoaderCircle, ShieldCheck, Bell, Eye, Phone, PackageCheck,
 } from 'lucide-react'
 import './DineInPaymentPage.css'
+import { motion, useReducedMotion } from 'framer-motion'
+import FoodSuccessAnimation from './components/FoodSuccessAnimation.jsx'
 
 function PaymentStepper({ step = 2 }) {
   const steps = ['Cart', 'Payment', 'Confirm']
@@ -89,6 +91,7 @@ export default function DineInPaymentPage({
   paymentSession, placedOrder, formatMoney, onReturnToMenu, onOrders,
   onViewStatus, onCallWaiter,
 }) {
+  const reduceMotion = useReducedMotion()
   const currentStep = stage === 'confirmation' ? 3 : 2
   return <main className="payment-area">
     <div className="payment-mobile-brand">
@@ -126,11 +129,16 @@ export default function DineInPaymentPage({
     {stage === 'confirmation' && <section className="payment-content confirmation-content" aria-labelledby="confirmation-title">
       <div className="confirmation-layout">
         <section className="confirmation-success-panel">
-          <span className="confirmation-check"><CheckCircle2 size={59} /></span>
-          <h1 id="confirmation-title">Order Placed!</h1>
+          <FoodSuccessAnimation orderId={placedOrder?.orderId} />
+          <motion.h1 id="confirmation-title" initial={reduceMotion ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .55, delay: reduceMotion ? 0 : .4, ease: 'easeOut' }}>Order Placed Successfully!</motion.h1>
           <p className="confirmation-success-copy">Your order has been sent to the kitchen.</p>
           <div className="confirmation-table-card"><span><Utensils size={38} /></span><div><strong>Table No. {placedOrder?.tableNumber || tableNumber}</strong><small>Order ID: #{String(placedOrder?.orderId || '').replace(/^#/, '')}</small></div></div>
-          <button className="confirmation-status-button" onClick={onViewStatus}><Eye size={19} /> View Order Status <ArrowRight size={17} /></button>
+          <div className="confirmation-success-details" aria-label="Order details">
+            <div><small>Total Amount</small><strong>{formatMoney(placedOrder?.total || total)}</strong></div>
+            <div><small>Payment Method</small><strong>{placedOrder?.paymentMethod === 'upi' ? 'UPI' : 'Pay at counter'}</strong></div>
+            <div><small>Order Status</small><strong>{placedOrder?.orderStatus || 'Placed'}</strong></div>
+          </div>
+          <button className="confirmation-status-button" onClick={onViewStatus}><Eye size={19} /> Track Order <ArrowRight size={17} /></button>
           <div className="confirmation-waiter"><span><Bell size={16} /> Need anything? Call the waiter.</span><button onClick={onCallWaiter}><Phone size={15} /> Call Waiter</button></div>
         </section>
         <OrderSummaryPanel order={placedOrder} formatMoney={formatMoney} />

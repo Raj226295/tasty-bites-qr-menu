@@ -1,0 +1,79 @@
+.product-modal-overlay { position: fixed; inset: 0; z-index: 60; padding: 28px; display: grid; place-items: center; overflow-y: auto; background: rgba(15, 20, 29, .57); }
+.product-details-modal { position: relative; width: min(900px, 100%); max-height: 90vh; padding: 28px; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: 30px; overflow-y: auto; border: 1px solid rgba(255,255,255,.72); border-radius: 20px; outline: none; background: #fff; box-shadow: 0 24px 80px rgba(10, 16, 27, .28); }
+.product-modal-close { position: absolute; top: 14px; right: 14px; z-index: 4; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 50%; background: rgba(255,255,255,.94); color: #344054; transition: background .16s, color .16s, border-color .16s; }
+.product-modal-close:hover { border-color: #ffe0cc; background: #fff4ec; color: #e95200; }
+.product-modal-close:focus-visible, .product-modal-thumbnails button:focus-visible, .product-modal-quantity button:focus-visible, .product-modal-add:focus-visible, .admin-password-toggle:focus-visible { outline: 3px solid rgba(255,90,0,.35); outline-offset: 2px; }
+.product-modal-gallery { min-width: 0; align-self: start; }
+.product-modal-image-wrap { position: relative; aspect-ratio: 1 / .98; overflow: hidden; border-radius: 13px; background: #f1f3f6; }
+.product-modal-image { width: 100%; height: 100%; display: block; object-fit: cover; }
+.product-modal-image-placeholder { width: 100%; height: 100%; display: grid; place-content: center; justify-items: center; gap: 9px; background: linear-gradient(145deg, #f5f6f8, #eceff3); color: #8793a5; font-size: 13px; }
+.product-modal-diet { position: absolute; top: 14px; left: 14px; width: 29px; height: 29px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 5px; background: #fff; box-shadow: 0 2px 7px rgba(0,0,0,.14); }
+.product-modal-diet.veg, .product-modal-food-type.veg { color: #078b35; }
+.product-modal-diet.nonveg, .product-modal-food-type.nonveg { color: #e52328; }
+.product-modal-diet i, .product-modal-food-type i { width: 12px; height: 12px; display: block; border-radius: 50%; background: currentColor; }
+.product-modal-diet b { width: 0; height: 0; border-right: 7px solid transparent; border-bottom: 12px solid currentColor; border-left: 7px solid transparent; }
+.product-modal-rating { position: absolute; top: 14px; right: 14px; min-height: 32px; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; background: #079c4c; color: #fff; font: 800 14px 'Manrope', sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.16); }
+.product-modal-thumbnails { margin-top: 10px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.product-modal-thumbnails button { aspect-ratio: 1.12; padding: 0; overflow: hidden; border: 2px solid transparent; border-radius: 10px; background: #f1f3f6; }
+.product-modal-thumbnails button.active { border-color: #ff5a00; }
+.product-modal-thumbnails img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.product-modal-info { min-width: 0; padding: 27px 0 0; display: flex; flex-direction: column; }
+.product-modal-info h2 { margin: 0 36px 13px 0; color: #171d2b; font: 800 clamp(23px, 2.3vw, 29px)/1.2 'Manrope', sans-serif; letter-spacing: -.7px; }
+.product-modal-meta { display: flex; align-items: center; gap: 14px; }
+.product-modal-food-type { display: inline-flex; align-items: center; gap: 5px; color: #526075; font-size: 12px; }
+.product-modal-food-type i { width: 12px; height: 12px; border: 1.5px solid currentColor; background: transparent; }
+.product-modal-food-type.veg i { background: radial-gradient(circle, currentColor 0 3px, transparent 3.5px); }
+.product-modal-food-type.nonveg i { border-radius: 2px; background: currentColor; clip-path: polygon(50% 0,100% 100%,0 100%); }
+.product-modal-review { display: inline-flex; align-items: center; gap: 4px; color: #eb9a00; font-size: 13px; font-weight: 750; }
+.product-modal-review small { color: #66748c; font-size: 11px; font-weight: 500; }
+.product-modal-description { margin: 14px 0 13px; color: #5d687c; font-size: 13px; line-height: 1.65; }
+.product-modal-price { min-height: 45px; display: flex; align-items: center; gap: 11px; }
+.product-modal-price strong { color: #171d2b; font: 800 25px 'Manrope', sans-serif; font-variant-numeric: tabular-nums; }
+.product-modal-price del { color: #8993a3; font-size: 12px; }
+.product-modal-price > span { padding: 5px 9px; border-radius: 20px; background: #fff0e5; color: #e95200; font-size: 11px; font-weight: 800; }
+.product-modal-quantity { margin-top: 8px; padding-top: 14px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 9px; border-top: 1px solid #e9edf2; }
+.product-modal-quantity > strong { color: #263249; font-size: 13px; }
+.product-modal-quantity > div { display: flex; align-items: center; gap: 7px; }
+.product-modal-quantity button { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid #e5e9ef; border-radius: 50%; background: #fff; color: #ed580e; transition: background .16s, transform .16s; }
+.product-modal-quantity button:last-child { border-color: #ff5a00; background: #ff5a00; color: #fff; }
+.product-modal-quantity button:hover:not(:disabled) { transform: scale(1.06); background: #fff1e8; }
+.product-modal-quantity button:last-child:hover { background: #e95100; }
+.product-modal-quantity button:disabled { cursor: not-allowed; color: #a8b0bd; }
+.product-modal-quantity output { min-width: 25px; color: #182235; font-size: 14px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; }
+.product-modal-quantity > small { grid-column: 1 / -1; min-height: 14px; color: #778397; font-size: 10px; }
+.product-modal-add-wrap { margin-top: 3px; }
+.product-modal-add { width: 100%; min-height: 49px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 11px; background: linear-gradient(100deg, #ff5a00, #ff6908); color: #fff; font-size: 14px; font-weight: 800; box-shadow: 0 6px 14px rgba(255,90,0,.17); transition: background .16s, box-shadow .16s; }
+.product-modal-add:hover { background: #e95100; box-shadow: 0 8px 18px rgba(255,90,0,.23); }
+.product-modal-add.is-added { background: #0d9b53; }
+.product-modal-add > span { display: inline-flex; }
+.product-modal-detail { margin-top: 15px; display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: start; gap: 10px; }
+.product-modal-detail-icon { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; }
+.product-modal-detail-icon.ingredients { color: #05a9c4; }
+.product-modal-detail-icon.allergens { background: #fff0e5; color: #ff5a00; }
+.product-modal-detail > div { min-width: 0; }
+.product-modal-detail strong { color: #202b3d; font-size: 12px; }
+.product-modal-detail p { margin: 4px 0 0; color: #66748c; font-size: 11px; line-height: 1.5; }
+@media (max-width: 720px) {
+  .product-modal-overlay { padding: 12px; }
+  .product-details-modal { width: 100%; max-height: 90dvh; padding: 15px; grid-template-columns: minmax(0, 1fr); gap: 0; border-radius: 17px; }
+  .product-modal-close { position: fixed; top: max(18px, calc((100dvh - 90dvh) / 2 + 9px)); right: 21px; width: 36px; height: 36px; }
+  .product-modal-image-wrap { aspect-ratio: 1.45 / 1; }
+  .product-modal-diet { top: 10px; left: 10px; }
+  .product-modal-rating { top: 10px; right: 10px; }
+  .product-modal-thumbnails { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+  .product-modal-info { padding: 18px 2px 4px; }
+  .product-modal-info h2 { margin-right: 38px; font-size: 24px; }
+  .product-modal-description { margin-block: 10px; }
+  .product-modal-add-wrap { position: sticky; bottom: -1px; z-index: 2; margin: 8px -2px 0; padding: 8px 2px 5px; background: #fff; }
+  .product-modal-detail { margin-top: 12px; }
+}
+@media (max-width: 380px) {
+  .product-modal-overlay { padding: 8px; }
+  .product-details-modal { padding: 12px; }
+  .product-modal-meta { gap: 9px; }
+  .product-modal-review small { font-size: 10px; }
+  .product-modal-image-wrap { aspect-ratio: 1.3 / 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-modal-close, .product-modal-quantity button, .product-modal-add, .product-modal-thumbnails button { transition: none; }
+}
