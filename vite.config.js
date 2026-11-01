@@ -11,4 +11,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    port: Number(process.env.PORT) || 4173,
+    strictPort: true,
+    allowedHosts: ['tasty-bites-qr-menu-1.onrender.com'],
+  },
 })
