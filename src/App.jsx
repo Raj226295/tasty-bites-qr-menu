@@ -14,6 +14,7 @@ import DeliveryCheckoutPage from './DeliveryCheckoutPage.jsx'
 import DeliveryConfirmationPage from './DeliveryConfirmationPage.jsx'
 import DeliveryTrackingPage from './DeliveryTrackingPage.jsx'
 import AdminDashboard from './AdminDashboard.jsx'
+import MobileBottomNav from './components/MobileBottomNav.jsx'
 const ProductDetailsModal = lazy(() => import('./components/ProductDetailsModal.jsx'))
 
 const dishes = [
@@ -107,6 +108,13 @@ const offerItems = [
   { dishId: 1, name: 'Paneer Tikka', description: 'Marinated cottage cheese grilled to perfection.', category: 'Starters', cuisine: 'Indian', price: 220, originalPrice: 260, rating: 4.4, veg: true, image: dishes[0].image, availableFor: ['Dine-in', 'Home Delivery'], available: true },
 ]
 const cartProducts = [...dishes, { id: 17, name: 'Chicken Momos', category: 'Starters', price: 150, veg: false, description: 'Steamed chicken momos served with spicy chutney.', image: 'photo-1563245372-f21724e3856d' }]
+const CUSTOMER_SESSION_KEY = 'tastyBitesCustomerSessionV1'
+const CUSTOMER_PAGES = new Set(['menu', 'orders', 'offers', 'help', 'waiter', 'payment', 'onlinePayment', 'confirmation', 'deliveryCheckout', 'deliveryConfirmation', 'deliveryTracking'])
+
+const readCustomerSession = () => {
+  try { return JSON.parse(window.sessionStorage.getItem(CUSTOMER_SESSION_KEY) || '{}') }
+  catch { return {} }
+}
 const getOfferDiscount = ({ price, originalPrice }) => Math.max(0, Math.round(((originalPrice - price) / originalPrice) * 100))
 
 function OfferCard({ offer, quantity, onQuantityChange }) {
@@ -227,29 +235,33 @@ function AdminLoginPage({ onBack, onLogin }) {
 }
 
 function App() {
-  const [category, setCategory] = useState('All')
-  const [query, setQuery] = useState('')
+  const [persistedSession] = useState(readCustomerSession)
+  const [category, setCategory] = useState(persistedSession.category || 'All')
+  const [query, setQuery] = useState(persistedSession.query || '')
   const [menuFiltersOpen, setMenuFiltersOpen] = useState(false)
-  const [menuFilterDraft, setMenuFilterDraft] = useState({ diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
-  const [menuFacetFilters, setMenuFacetFilters] = useState({ diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
-  const [menuSort, setMenuSort] = useState('recommended')
-  const [cart, setCart] = useState({})
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const [orderType, setOrderType] = useState('Dine-in')
-  const [instructions, setInstructions] = useState('')
+  const [menuFilterDraft, setMenuFilterDraft] = useState(persistedSession.menuFilterDraft || { diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
+  const [menuFacetFilters, setMenuFacetFilters] = useState(persistedSession.menuFacetFilters || { diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
+  const [menuSort, setMenuSort] = useState(persistedSession.menuSort || 'recommended')
+  const [cart, setCart] = useState(persistedSession.cart || {})
+  const [selectedProduct, setSelectedProduct] = useState(() => {
+    const product = cartProducts.find((item) => item.id === persistedSession.selectedProductId)
+    return product ? { ...product, ...productDetails[product.id] } : null
+  })
+  const [orderType, setOrderType] = useState(persistedSession.orderType || 'Dine-in')
+  const [instructions, setInstructions] = useState(persistedSession.instructions || '')
   const [notice, setNotice] = useState('')
-  const [cartOpen, setCartOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(Boolean(persistedSession.cartOpen))
   const cartIconRef = useRef(null)
   const isAdminAuthenticated = () => window.localStorage.getItem('tastyAdminAuth') === 'true' || window.sessionStorage.getItem('tastyAdminAuth') === 'true'
-  const [page, setPage] = useState(() => window.location.pathname.startsWith('/admin') ? (isAdminAuthenticated() && window.location.pathname !== '/admin/login' ? 'adminDashboard' : 'adminLogin') : 'menu')
+  const [page, setPage] = useState(() => window.location.pathname.startsWith('/admin') ? (isAdminAuthenticated() && window.location.pathname !== '/admin/login' ? 'adminDashboard' : 'adminLogin') : CUSTOMER_PAGES.has(persistedSession.page) ? persistedSession.page : 'menu')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [orderQuery, setOrderQuery] = useState('')
-  const [orderTypeFilter, setOrderTypeFilter] = useState('All')
-  const [placedOrders, setPlacedOrders] = useState([])
-  const [statusFilter, setStatusFilter] = useState('All Status')
-  const [ordersPage, setOrdersPage] = useState(1)
+  const [orderQuery, setOrderQuery] = useState(persistedSession.orderQuery || '')
+  const [orderTypeFilter, setOrderTypeFilter] = useState(persistedSession.orderTypeFilter || 'All')
+  const [placedOrders, setPlacedOrders] = useState(persistedSession.placedOrders || [])
+  const [statusFilter, setStatusFilter] = useState(persistedSession.statusFilter || 'All Status')
+  const [ordersPage, setOrdersPage] = useState(persistedSession.ordersPage || 1)
   const [selectedOrder, setSelectedOrder] = useState(null)
-  const [orderStatusOverrides, setOrderStatusOverrides] = useState({})
+  const [orderStatusOverrides, setOrderStatusOverrides] = useState(persistedSession.orderStatusOverrides || {})
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
   const [cancelError, setCancelError] = useState('')
@@ -259,14 +271,14 @@ function App() {
   const cancelDialogRef = useRef(null)
   const cancelTriggerRef = useRef(null)
   const orderDoneRef = useRef(null)
-  const [dateRange, setDateRange] = useState('Last 30 days')
-  const [offerFilter, setOfferFilter] = useState('All Offers')
-  const [offersSearch, setOffersSearch] = useState('')
-  const [offersSort, setOffersSort] = useState('discount')
+  const [dateRange, setDateRange] = useState(persistedSession.dateRange || 'Last 30 days')
+  const [offerFilter, setOfferFilter] = useState(persistedSession.offerFilter || 'All Offers')
+  const [offersSearch, setOffersSearch] = useState(persistedSession.offersSearch || '')
+  const [offersSort, setOffersSort] = useState(persistedSession.offersSort || 'discount')
   const [offersFiltersOpen, setOffersFiltersOpen] = useState(false)
-  const [offerFilterDraft, setOfferFilterDraft] = useState({ diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
-  const [offerFacetFilters, setOfferFacetFilters] = useState({ diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
-  const [cartPriceOverrides, setCartPriceOverrides] = useState({})
+  const [offerFilterDraft, setOfferFilterDraft] = useState(persistedSession.offerFilterDraft || { diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
+  const [offerFacetFilters, setOfferFacetFilters] = useState(persistedSession.offerFacetFilters || { diet: 'all', cuisine: 'all', price: 'all', rating: 'all' })
+  const [cartPriceOverrides, setCartPriceOverrides] = useState(persistedSession.cartPriceOverrides || {})
   const [waiterState, setWaiterState] = useState('idle')
   const [waiterMessage, setWaiterMessage] = useState('')
   const [bellRinging, setBellRinging] = useState(false)
@@ -275,21 +287,47 @@ function App() {
   const audioContext = useRef(null)
   const [openFaq, setOpenFaq] = useState(-1)
   const [showAllFaqs, setShowAllFaqs] = useState(false)
-  const [supportTopic, setSupportTopic] = useState('General support')
+  const [supportTopic, setSupportTopic] = useState(persistedSession.supportTopic || 'General support')
+  const [supportDraft, setSupportDraft] = useState(persistedSession.supportDraft || { name: '', phone: '', email: '', message: '' })
   const [supportFeedback, setSupportFeedback] = useState('')
   const supportFormRef = useRef(null)
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('online')
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(persistedSession.selectedPaymentMethod || 'online')
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutError, setCheckoutError] = useState('')
-  const [paymentSession, setPaymentSession] = useState(null)
-  const [placedOrder, setPlacedOrder] = useState(null)
-  const [deliveryPlacedOrder, setDeliveryPlacedOrder] = useState(null)
+  const [paymentSession, setPaymentSession] = useState(persistedSession.paymentSession || null)
+  const [placedOrder, setPlacedOrder] = useState(persistedSession.placedOrder || null)
+  const [deliveryPlacedOrder, setDeliveryPlacedOrder] = useState(persistedSession.deliveryPlacedOrder || null)
   const checkoutRequestLock = useRef(false)
   const checkoutRequestKey = useRef(null)
   const qrParams = new URLSearchParams(window.location.search)
   const qrTableId = qrParams.get('table') || qrParams.get('tableNo') || window.sessionStorage.getItem('tableId') || window.sessionStorage.getItem('tableNo') || ''
   const checkoutTableNumber = qrTableId || '5'
   const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'hello@tastybites.example'
+
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/admin')) return
+    const snapshot = {
+      page, category, query, menuFilterDraft, menuFacetFilters, menuSort, cart,
+      selectedProductId: selectedProduct?.id || null, orderType, instructions, cartOpen,
+      orderQuery, orderTypeFilter, placedOrders, statusFilter, ordersPage, orderStatusOverrides,
+      dateRange, offerFilter, offersSearch, offersSort, offerFilterDraft, offerFacetFilters,
+      cartPriceOverrides, supportTopic, supportDraft, selectedPaymentMethod, paymentSession,
+      placedOrder, deliveryPlacedOrder,
+    }
+    try { window.sessionStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(snapshot)) } catch { /* Continue without persistence if storage is unavailable. */ }
+  }, [page, category, query, menuFilterDraft, menuFacetFilters, menuSort, cart, selectedProduct, orderType, instructions, cartOpen, orderQuery, orderTypeFilter, placedOrders, statusFilter, ordersPage, orderStatusOverrides, dateRange, offerFilter, offersSearch, offersSort, offerFilterDraft, offerFacetFilters, cartPriceOverrides, supportTopic, supportDraft, selectedPaymentMethod, paymentSession, placedOrder, deliveryPlacedOrder])
+
+  useEffect(() => {
+    const savedScroll = Number(window.sessionStorage.getItem(`tastyBitesScroll:${page}`) || 0)
+    const frame = requestAnimationFrame(() => window.scrollTo({ top: savedScroll, behavior: 'auto' }))
+    let pendingFrame = 0
+    const rememberScroll = () => {
+      cancelAnimationFrame(pendingFrame)
+      pendingFrame = requestAnimationFrame(() => window.sessionStorage.setItem(`tastyBitesScroll:${page}`, String(window.scrollY)))
+    }
+    window.addEventListener('scroll', rememberScroll, { passive: true })
+    return () => { cancelAnimationFrame(frame); cancelAnimationFrame(pendingFrame); window.removeEventListener('scroll', rememberScroll) }
+  }, [page])
 
   useEffect(() => {
     const syncAdminRoute = () => {
@@ -714,8 +752,22 @@ function App() {
     setCartOpen(true)
   }
 
+  const mobileBottomNavVisible = ['menu', 'orders', 'offers'].includes(page)
+  const mobileBottomNavActiveTab = cartOpen ? 'cart' : page
+  const handleMobileBottomNavigation = (destination) => {
+    setSelectedProduct(null)
+    if (destination === 'cart') {
+      setPage('menu')
+      setCartOpen(true)
+      setMobileMenuOpen(false)
+      return
+    }
+    if (destination === 'orders') setOrdersPage(1)
+    navigateToCustomerPage(destination)
+  }
+
   return (
-    page === 'adminDashboard' ? <AdminDashboard onLogout={logoutAdmin} /> : <div className={`app-shell ${page === 'orders' ? 'orders-mode' : ''} ${page === 'offers' ? 'offers-mode' : ''} ${page === 'waiter' ? 'waiter-mode' : ''} ${page === 'help' ? 'help-mode' : ''} ${page === 'adminLogin' ? 'admin-login-mode' : ''} ${['payment', 'onlinePayment', 'confirmation', 'deliveryCheckout', 'deliveryConfirmation', 'deliveryTracking'].includes(page) ? 'checkout-mode' : ''}`}>
+    page === 'adminDashboard' ? <AdminDashboard onLogout={logoutAdmin} /> : <div className={`app-shell ${page === 'orders' ? 'orders-mode' : ''} ${page === 'offers' ? 'offers-mode' : ''} ${page === 'waiter' ? 'waiter-mode' : ''} ${page === 'help' ? 'help-mode' : ''} ${page === 'adminLogin' ? 'admin-login-mode' : ''} ${mobileBottomNavVisible ? 'mobile-bottom-nav-visible' : ''} ${['payment', 'onlinePayment', 'confirmation', 'deliveryCheckout', 'deliveryConfirmation', 'deliveryTracking'].includes(page) ? 'checkout-mode' : ''}`}>
       <aside className="sidebar">
         <a className="brand" href="#menu" aria-label="Tasty Bites home">
           <span className="brand-mark"><ChefHat size={27} strokeWidth={2.1} /></span>
@@ -749,8 +801,7 @@ function App() {
       </div>}
 
       {page === 'adminLogin' ? <AdminLoginPage onBack={returnToMenu} onLogin={enterAdminDashboard} /> : page === 'offers' ? <main className="offers-area" id="offers">
-        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
-        <div className="mobile-page-nav offers-mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button onClick={() => setPage('orders')}>My Orders</button><button className="selected" onClick={() => setPage('offers')}>Offers</button></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button type="button" className="mobile-action" onClick={() => navigateToCustomerPage('waiter')} aria-label="Call waiter" title="Call waiter"><ConciergeBell size={20} /></button></div>
         <div className="offers-topbar">
           <label className="offers-search"><Search size={20} /><input value={offersSearch} onChange={(event) => setOffersSearch(event.target.value)} placeholder="Search for dishes..." aria-label="Search offers" />{offersSearch && <button className="icon-button subtle" onClick={() => setOffersSearch('')} aria-label="Clear offer search"><X size={16} /></button>}</label>
         </div>
@@ -760,14 +811,13 @@ function App() {
           {!visibleOffers.length && <div className="offers-empty"><Search size={25} /><h2>No offers found</h2><p>Try another search or switch to a different offer filter.</p><button onClick={() => { setOffersSearch(''); setOfferFilter('All Offers') }}>Show all offers</button></div>}
         </div>
       </main> : page === 'menu' ? <main className="menu-area" id="menu">
-        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu"><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => setCartOpen(true)} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
-        <div className="mobile-page-nav"><button className="selected" onClick={() => setPage('menu')}>Menu</button><button onClick={() => setPage('orders')}>My Orders</button></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu"><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button type="button" className="mobile-action" onClick={() => navigateToCustomerPage('waiter')} aria-label="Call waiter" title="Call waiter"><ConciergeBell size={20} /></button></div>
         <div className="search-row">
           <label className="search-box"><Search size={20} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search for dishes..." aria-label="Search dishes" />{query && <button aria-label="Clear search" className="icon-button subtle" onClick={() => setQuery('')}><X size={16} /></button>}</label>
         </div>
         <div className="menu-nav-row">
           <div className="category-row" role="tablist" aria-label="Menu categories">
-            {categories.map(({ name, icon: Icon }) => <button key={name} role="tab" aria-selected={category === name} className={`category-chip ${category === name ? 'chosen' : ''}`} onClick={() => setCategory(name)}><Icon size={18} strokeWidth={2} /><span>{name}</span></button>)}
+            {categories.map(({ name, icon: Icon }) => <button key={name} role="tab" aria-selected={category === name} className={`category-chip ${name === 'All' ? 'category-chip-all' : ''} ${category === name ? 'chosen' : ''}`} onClick={() => setCategory(name)}><Icon size={18} strokeWidth={2} aria-hidden="true" /><span>{name}</span></button>)}
           </div>
           <div className="menu-control-group">
           <div className="menu-filter-wrap">
@@ -793,7 +843,6 @@ function App() {
           ))}
           {!visibleDishes.length && <div className="empty-menu"><span><Search size={23} /></span><h2>No dishes found</h2><p>Try another search or choose a different category.</p><button onClick={() => { setQuery(''); setCategory('All'); const empty = { diet: 'all', cuisine: 'all', price: 'all', rating: 'all' }; setMenuFilterDraft(empty); setMenuFacetFilters(empty); setMenuSort('recommended') }}>Show all dishes</button></div>}
         </div>
-        <footer className="menu-footer"><span>Good food, good mood.</span><span>Made with care <i>at Tasty Bites</i></span></footer>
       </main> : page === 'deliveryCheckout' ? <DeliveryCheckoutPage items={cartEntries.map((item) => ({ ...item, quantity: cart[item.id] }))} itemCount={itemCount} subtotal={subtotal} tax={tax} deliveryFee={deliveryFee} total={deliveryTotal} formatMoney={money} onBack={backToCart} onPlaceOrder={submitDeliveryOrder} loading={checkoutLoading} error={checkoutError} /> : page === 'deliveryConfirmation' ? <DeliveryConfirmationPage order={deliveryPlacedOrder} formatMoney={money} onTrack={() => setPage('deliveryTracking')} onSupport={() => setPage('help')} /> : page === 'deliveryTracking' ? <DeliveryTrackingPage order={deliveryPlacedOrder} formatMoney={money} onBack={() => setPage('deliveryConfirmation')} onSupport={() => setPage('help')} /> : ['payment', 'onlinePayment', 'confirmation'].includes(page) ? <DineInPaymentPage
         stage={page}
         items={cartEntries.map((item) => ({ ...item, quantity: cart[item.id] }))}
@@ -817,7 +866,7 @@ function App() {
         placedOrder={placedOrder}
         formatMoney={money}
       /> : page === 'help' ? <main className="help-area" id="help">
-        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button type="button" className="mobile-action" onClick={() => navigateToCustomerPage('waiter')} aria-label="Call waiter" title="Call waiter"><ConciergeBell size={20} /></button></div>
         <div className="mobile-page-nav offers-mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button onClick={() => { setPage('orders'); setOrdersPage(1) }}>My Orders</button><button className="selected" onClick={() => setPage('help')}>Help</button></div>
         <header className="help-heading"><h1>Help &amp; <em>Support</em></h1><p>Have a question or need assistance? We’re always ready to help you.</p></header>
         <div className="help-main-grid">
@@ -837,9 +886,9 @@ function App() {
             </div>
             <div className="support-form-divider"><span>or send us a message</span></div>
             <form className="support-form" ref={supportFormRef} onSubmit={submitSupportMessage}>
-              <div className="support-input-row"><label><Users size={16} /><input name="name" placeholder="Your Name" aria-label="Your name" required /></label><label><ConciergeBell size={16} /><input name="phone" type="tel" placeholder="Your Mobile Number" aria-label="Your mobile number" required /></label></div>
-              <label><Mail size={16} /><input name="email" type="email" placeholder="Your Email (Optional)" aria-label="Your email (optional)" /></label>
-              <label className="support-message-field"><MessageCircle size={16} /><textarea name="message" placeholder="Write your message here..." aria-label="Your message" required rows={3} /></label>
+              <div className="support-input-row"><label><Users size={16} /><input name="name" placeholder="Your Name" aria-label="Your name" required value={supportDraft.name} onChange={(event) => setSupportDraft((draft) => ({ ...draft, name: event.target.value }))} /></label><label><ConciergeBell size={16} /><input name="phone" type="tel" placeholder="Your Mobile Number" aria-label="Your mobile number" required value={supportDraft.phone} onChange={(event) => setSupportDraft((draft) => ({ ...draft, phone: event.target.value }))} /></label></div>
+              <label><Mail size={16} /><input name="email" type="email" placeholder="Your Email (Optional)" aria-label="Your email (optional)" value={supportDraft.email} onChange={(event) => setSupportDraft((draft) => ({ ...draft, email: event.target.value }))} /></label>
+              <label className="support-message-field"><MessageCircle size={16} /><textarea name="message" placeholder="Write your message here..." aria-label="Your message" required rows={3} value={supportDraft.message} onChange={(event) => setSupportDraft((draft) => ({ ...draft, message: event.target.value }))} /></label>
               <div className="support-form-footer"><span>Topic: {supportTopic}</span><button type="submit"><Send size={18} /> Send Message</button></div>
               {supportFeedback && <p className="support-feedback" role="status">{supportFeedback}</p>}
             </form>
@@ -850,7 +899,7 @@ function App() {
           <div className="help-topic-grid">{helpTopics.map(({ title, description, icon: Icon, tone, subject }) => <button key={title} className={`help-topic ${tone}`} onClick={() => selectSupportTopic(subject)}><span className="help-topic-icon"><Icon size={23} /></span><span className="help-topic-copy"><strong>{title}</strong><small>{description}</small></span><ChevronRight size={19} /></button>)}</div>
         </section>
       </main> : page === 'waiter' ? <main className="waiter-area" id="waiter">
-        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button type="button" className="mobile-action" onClick={() => navigateToCustomerPage('waiter')} aria-label="Call waiter" title="Call waiter"><ConciergeBell size={20} /></button></div>
         <div className="mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button onClick={() => setPage('orders')}>My Orders</button><button className="selected" onClick={() => setPage('waiter')}>Call Waiter</button></div>
         <section className="waiter-card" aria-labelledby="waiter-title">
           <BellAnimation ringing={bellRinging} />
@@ -865,8 +914,7 @@ function App() {
           </div>
         </section>
       </main> : <main className="orders-area" id="orders">
-        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button className="mobile-cart" onClick={() => { setPage('menu'); setCartOpen(true) }} aria-label={`Open cart, ${itemCount} items`}><ShoppingCart size={20} />{itemCount > 0 && <b>{itemCount}</b>}</button></div>
-        <div className="mobile-page-nav"><button onClick={() => setPage('menu')}>Menu</button><button className="selected" onClick={() => setPage('orders')}>My Orders</button></div>
+        <div className="mobile-brand"><button type="button" className="mobile-menu-toggle" aria-label="Open navigation" onClick={() => setMobileMenuOpen(true)}><Menu size={21} /></button><a className="brand" href="#menu" onClick={(event) => { event.preventDefault(); setPage('menu') }}><span className="brand-mark"><ChefHat size={25} /></span><span className="brand-type"><strong>Tasty <i>Bites</i></strong><small>RESTAURANT</small></span></a><button type="button" className="mobile-action" onClick={() => navigateToCustomerPage('waiter')} aria-label="Call waiter" title="Call waiter"><ConciergeBell size={20} /></button></div>
         <div className="orders-toolbar"><label className="orders-search"><Search size={19} /><input value={orderQuery} onChange={(event) => { setOrderQuery(event.target.value); setOrdersPage(1) }} placeholder="Search by Order ID, Table No, or items..." aria-label="Search orders" />{orderQuery && <button className="icon-button subtle" aria-label="Clear search" onClick={() => setOrderQuery('')}><X size={16} /></button>}</label><label className="date-select"><CalendarDays size={18} /><select value={dateRange} onChange={(event) => setDateRange(event.target.value)} aria-label="Date range"><option>Last 30 days</option><option>Last 7 days</option><option>All time</option></select><ChevronDown size={15} /></label></div>
         <header className="orders-heading"><h1>My Orders</h1><p>View and track all your restaurant orders</p></header>
         <div className="order-summary">
@@ -933,6 +981,7 @@ function App() {
           </div>}
         </section>
       </div>}
+      {mobileBottomNavVisible && <MobileBottomNav activeTab={mobileBottomNavActiveTab} cartQuantity={itemCount} onNavigate={handleMobileBottomNavigation} />}
       {notice && <div className="toast" role="status"><span><Check size={16} /></span>{notice}</div>}
     </div>
   )

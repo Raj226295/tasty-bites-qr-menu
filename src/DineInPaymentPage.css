@@ -101,8 +101,13 @@
 @media (max-width: 1050px) {
   .payment-area { padding: 25px 22px; }
   .payment-stepper { margin-bottom: 26px; }
-  .payment-method-card { min-height: 220px; }
-  .payment-method-description { font-size: 16px; }
+  .payment-method-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .payment-method-card { min-height: 148px; padding: 18px 54px 18px 20px; display: grid; grid-template-columns: 64px minmax(0, 1fr); grid-template-rows: auto auto; justify-items: start; align-content: center; column-gap: 16px; text-align: left; border-radius: 15px; }
+  .payment-method-choice { top: 14px; right: 14px; }
+  .payment-method-icon { width: 62px; height: 62px; margin: 0; grid-row: span 2; }
+  .payment-method-icon svg { width: 32px; height: 32px; }
+  .payment-method-card > strong { align-self: end; font-size: 19px; }
+  .payment-method-description { max-width: 46ch; margin-top: 4px; font-size: 14px; line-height: 1.4; }
 }
 @media (max-width: 690px) {
   .payment-area { min-height: 100vh; padding: 12px 13px 22px; }
@@ -130,14 +135,15 @@
   .payment-summary-total > span { font-size: 11px; }
   .payment-summary-total > strong { font-size: 20px; }
   .payment-summary-total > small { justify-self: end; font-size: 11px; }
-  .payment-method-grid { grid-template-columns: minmax(0, 1fr); gap: 11px; }
-  .payment-method-card { min-height: 158px; padding: 17px 45px 17px 17px; display: grid; grid-template-columns: 58px minmax(0, 1fr); grid-template-rows: auto auto; justify-items: start; align-content: center; column-gap: 13px; text-align: left; border-radius: 14px; }
-  .payment-method-choice { top: 14px; right: 14px; width: 25px; height: 25px; }
-  .payment-method-icon { width: 56px; height: 56px; margin: 0; grid-row: span 2; }
-  .payment-method-icon svg { width: 29px; }
-  .payment-method-card > strong { align-self: end; font-size: 17px; }
-  .payment-method-description { margin-top: 4px; font-size: 12px; line-height: 1.4; }
-  .payment-actions { margin-top: 18px; padding-top: 0; gap: 9px; }
+  .payment-method-grid { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .payment-area .payment-method-card { height: auto; min-height: 112px; padding: 13px 42px 13px 14px; display: grid; grid-template-columns: 48px minmax(0, 1fr); grid-template-rows: auto auto; justify-items: start; align-content: center; column-gap: 12px; text-align: left; border-radius: 14px; }
+  .payment-method-choice { top: 12px; right: 12px; width: 23px; height: 23px; }
+  .payment-method-choice svg { width: 15px; height: 15px; }
+  .payment-method-icon { width: 48px; height: 48px; margin: 0; grid-row: span 2; }
+  .payment-method-icon svg { width: 25px; height: 25px; }
+  .payment-method-card > strong { align-self: end; font-size: 16px; }
+  .payment-method-description { margin-top: 3px; font-size: 11px; line-height: 1.38; }
+  .payment-actions { margin-top: 15px; padding-top: 0; gap: 9px; }
   .payment-back-button, .payment-continue-button { min-width: 0; min-height: 50px; padding-inline: 12px; gap: 7px; border-radius: 10px; font-size: 13px; }
   .payment-back-button { flex: 1; }
   .payment-continue-button { flex: 1.2; }

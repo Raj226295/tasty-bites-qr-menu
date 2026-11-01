@@ -1,13 +1,32 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { gsap } from 'gsap'
-import { AlertCircle, Camera, Check, ChevronDown, Flame, Leaf, Maximize2, Minus, Plus, ShoppingCart, Star, X } from 'lucide-react'
+import { motion } from 'motion/react'
+import { AlertCircle, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, Flame, ImagePlus, Leaf, Maximize2, Minus, Plus, RotateCcw, ShoppingCart, Star, X, ZoomIn, ZoomOut } from 'lucide-react'
 import './ProductDetailsModal.css'
 
 const PAGE_SIZE = 2
 const productImageUrl = (source, width = 1200) => source?.startsWith('http')
   ? source
   : source ? `https://images.unsplash.com/${source}?auto=format&fit=crop&w=${width}&q=90` : null
+
+const compressReviewPhoto = (file) => new Promise((resolve, reject) => {
+  const imageUrl = URL.createObjectURL(file)
+  const image = new Image()
+  image.onload = () => {
+    const scale = Math.min(1, 1200 / Math.max(image.naturalWidth, image.naturalHeight))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
+    const context = canvas.getContext('2d')
+    if (!context) { URL.revokeObjectURL(imageUrl); reject(new Error('This photo could not be prepared. Please choose another image.')); return }
+    context.drawImage(image, 0, 0, canvas.width, canvas.height)
+    URL.revokeObjectURL(imageUrl)
+    resolve(canvas.toDataURL('image/jpeg', .78))
+  }
+  image.onerror = () => { URL.revokeObjectURL(imageUrl); reject(new Error('This photo could not be opened. Please choose another image.')) }
+  image.src = imageUrl
+})
 
 const configuredReviewsEndpoint = (productId) => {
   const base = import.meta.env.VITE_PRODUCT_REVIEWS_ENDPOINT?.trim()
@@ -27,40 +46,149 @@ const distributionFor = (reviews = [], summary = {}) => {
 }
 
 function ProductImageGallery({ product, reduceMotion }) {
-  const images = (product.gallery?.length ? product.gallery : [product.image]).filter(Boolean)
+  const images = useMemo(() => (product.gallery?.length ? product.gallery : [product.image]).filter(Boolean), [product.gallery, product.image])
   const [activeIndex, setActiveIndex] = useState(0)
   const [imageFailed, setImageFailed] = useState(false)
+  const [zoomOpen, setZoomOpen] = useState(false)
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
   const imageRef = useRef(null)
+  const zoomImageRef = useRef(null)
+  const zoomViewerRef = useRef(null)
+  const zoomCloseRef = useRef(null)
+  const expandButtonRef = useRef(null)
   const galleryAnimation = useRef(null)
+  const activePointers = useRef(new Map())
+  const pinchStart = useRef(null)
+  const dragStart = useRef(null)
+  const zoomValue = useRef(1)
+  const panValue = useRef({ x: 0, y: 0 })
   const imageUrl = productImageUrl(images[activeIndex])
 
   useEffect(() => {
-    if (!imageRef.current || !imageUrl || reduceMotion) return undefined
-    const imageElement = imageRef.current
-    gsap.fromTo(imageElement, { autoAlpha: 0, scale: .985 }, { autoAlpha: 1, scale: 1, duration: .28, ease: 'power2.out' })
-    return () => gsap.killTweensOf(imageElement)
-  }, [imageUrl, reduceMotion])
+    const targets = [imageRef.current, zoomImageRef.current].filter(Boolean)
+    if (!targets.length || !imageUrl || reduceMotion) return undefined
+    gsap.fromTo(targets, { autoAlpha: 0, scale: .985 }, { autoAlpha: 1, scale: 1, duration: .28, ease: 'power2.out' })
+    return () => gsap.killTweensOf(targets)
+  }, [imageUrl, reduceMotion, zoomOpen])
 
-  const selectImage = (index) => {
-    if (index === activeIndex || !imageRef.current) return
-    if (reduceMotion) { setImageFailed(false); setActiveIndex(index); return }
+  const resetZoom = useCallback(() => {
+    zoomValue.current = 1
+    panValue.current = { x: 0, y: 0 }
+    setZoom(1)
+    setPan({ x: 0, y: 0 })
+  }, [])
+
+  const selectImage = useCallback((index) => {
+    const nextIndex = (index + images.length) % images.length
+    if (nextIndex === activeIndex) return
+    const targets = [imageRef.current, zoomImageRef.current].filter(Boolean)
+    if (reduceMotion || !targets.length) { setImageFailed(false); setActiveIndex(nextIndex); resetZoom(); return }
     galleryAnimation.current?.kill()
-    galleryAnimation.current = gsap.to(imageRef.current, {
+    galleryAnimation.current = gsap.to(targets, {
       autoAlpha: 0,
       scale: .985,
       duration: .13,
       ease: 'power2.out',
-      onComplete: () => { setImageFailed(false); setActiveIndex(index) },
+      onComplete: () => { setImageFailed(false); setActiveIndex(nextIndex); resetZoom() },
     })
+  }, [activeIndex, images.length, reduceMotion, resetZoom])
+
+  const navigateImage = useCallback((direction) => selectImage(activeIndex + direction), [activeIndex, selectImage])
+
+  const applyZoom = useCallback((nextValue) => {
+    const nextZoom = Math.min(4, Math.max(1, nextValue))
+    zoomValue.current = nextZoom
+    setZoom(nextZoom)
+    if (nextZoom === 1) {
+      panValue.current = { x: 0, y: 0 }
+      setPan({ x: 0, y: 0 })
+    }
+  }, [])
+
+  const closeZoom = useCallback(() => {
+    setZoomOpen(false)
+    resetZoom()
+    requestAnimationFrame(() => expandButtonRef.current?.focus({ preventScroll: true }))
+  }, [resetZoom])
+
+  useEffect(() => {
+    if (!zoomOpen) return undefined
+    requestAnimationFrame(() => zoomCloseRef.current?.focus({ preventScroll: true }))
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); closeZoom(); return }
+      if (event.key === 'ArrowLeft') { event.preventDefault(); event.stopImmediatePropagation(); navigateImage(-1); return }
+      if (event.key === 'ArrowRight') { event.preventDefault(); event.stopImmediatePropagation(); navigateImage(1); return }
+      if (event.key !== 'Tab' || !zoomViewerRef.current) return
+      const focusable = [...zoomViewerRef.current.querySelectorAll('button:not([disabled])')]
+      if (!focusable.length) return
+      event.stopImmediatePropagation()
+      if (event.shiftKey && document.activeElement === focusable[0]) { event.preventDefault(); focusable.at(-1).focus() }
+      else if (!event.shiftKey && document.activeElement === focusable.at(-1)) { event.preventDefault(); focusable[0].focus() }
+    }
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => document.removeEventListener('keydown', onKeyDown, true)
+  }, [closeZoom, navigateImage, zoomOpen])
+
+  useEffect(() => () => galleryAnimation.current?.kill(), [])
+
+  const pointerDistance = () => {
+    const points = [...activePointers.current.values()]
+    return points.length >= 2 ? Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) : 0
   }
+
+  const handlePointerDown = (event) => {
+    event.currentTarget.setPointerCapture?.(event.pointerId)
+    activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (activePointers.current.size === 2) pinchStart.current = { distance: pointerDistance(), zoom: zoomValue.current }
+    else dragStart.current = { x: event.clientX, y: event.clientY, pan: panValue.current }
+  }
+
+  const handlePointerMove = (event) => {
+    if (!activePointers.current.has(event.pointerId)) return
+    activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (activePointers.current.size >= 2 && pinchStart.current?.distance) {
+      applyZoom(pinchStart.current.zoom * (pointerDistance() / pinchStart.current.distance))
+      return
+    }
+    if (zoomValue.current > 1 && dragStart.current) {
+      const nextPan = { x: dragStart.current.pan.x + event.clientX - dragStart.current.x, y: dragStart.current.pan.y + event.clientY - dragStart.current.y }
+      panValue.current = nextPan
+      setPan(nextPan)
+    }
+  }
+
+  const handlePointerEnd = (event) => {
+    activePointers.current.delete(event.pointerId)
+    if (activePointers.current.size < 2) pinchStart.current = null
+    if (!activePointers.current.size) dragStart.current = null
+  }
+
+  const zoomViewer = zoomOpen && imageUrl ? createPortal(<div ref={zoomViewerRef} className="product-zoom-viewer" role="dialog" aria-modal="true" aria-label={`${product.name} image viewer`} onMouseDown={(event) => { if (event.target === event.currentTarget) closeZoom() }}>
+    <div className="product-zoom-toolbar" aria-label="Image zoom controls">
+      <button type="button" onClick={() => applyZoom(zoomValue.current - .25)} disabled={zoom <= 1} aria-label="Zoom out"><ZoomOut size={19} /></button>
+      <output aria-live="polite" aria-label="Current zoom">{Math.round(zoom * 100)}%</output>
+      <button type="button" onClick={() => applyZoom(zoomValue.current + .25)} disabled={zoom >= 4} aria-label="Zoom in"><ZoomIn size={19} /></button>
+      <button type="button" onClick={resetZoom} disabled={zoom === 1 && pan.x === 0 && pan.y === 0} aria-label="Reset zoom"><RotateCcw size={18} /></button>
+    </div>
+    <button ref={zoomCloseRef} type="button" className="product-zoom-close" onClick={closeZoom} aria-label="Close full-screen image viewer"><X size={23} /></button>
+    {images.length > 1 && <button type="button" className="product-zoom-arrow previous" onClick={() => navigateImage(-1)} aria-label="Previous product image"><ChevronLeft size={27} /></button>}
+    <div className="product-zoom-stage" onWheel={(event) => { event.preventDefault(); applyZoom(zoomValue.current + (event.deltaY < 0 ? .25 : -.25)) }} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerEnd} onPointerCancel={handlePointerEnd} onDoubleClick={() => applyZoom(zoomValue.current > 1 ? 1 : 2)}>
+      <img ref={zoomImageRef} src={imageUrl} alt={`${product.name}, image ${activeIndex + 1} of ${images.length}`} draggable="false" style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})` }} />
+    </div>
+    {images.length > 1 && <button type="button" className="product-zoom-arrow next" onClick={() => navigateImage(1)} aria-label="Next product image"><ChevronRight size={27} /></button>}
+    <span className="product-zoom-counter" aria-live="polite">{activeIndex + 1} / {images.length}</span>
+  </div>, document.body) : null
 
   return <div className="product-modal-gallery">
     <div className="product-modal-image-wrap">
       {imageUrl && !imageFailed ? <img ref={imageRef} className="product-modal-image" src={imageUrl} alt={product.name} onError={() => setImageFailed(true)} /> : <div className="product-modal-image-placeholder" role="img" aria-label={`${product.name} image unavailable`}><ShoppingCart size={36} /><span>Image unavailable</span></div>}
       <span className={`product-modal-diet ${product.veg ? 'veg' : 'nonveg'}`} title={product.veg ? 'Vegetarian' : 'Non-vegetarian'}>{product.veg ? <i /> : <b />}</span>
-      {imageUrl && <button type="button" className="product-modal-expand" aria-label={`Open full-size ${product.name} photo`} onClick={() => window.open(imageUrl, '_blank', 'noopener,noreferrer')}><Maximize2 size={17} /></button>}
+      {images.length > 1 && <><button type="button" className="product-modal-gallery-arrow previous" onClick={() => navigateImage(-1)} aria-label="Previous product image"><ChevronLeft size={22} /></button><button type="button" className="product-modal-gallery-arrow next" onClick={() => navigateImage(1)} aria-label="Next product image"><ChevronRight size={22} /></button></>}
+      {imageUrl && <button ref={expandButtonRef} type="button" className="product-modal-expand" aria-label={`Open full-screen ${product.name} photo`} onClick={() => { resetZoom(); setZoomOpen(true) }}><Maximize2 size={17} /></button>}
     </div>
     {images.length > 1 && <div className="product-modal-thumbnails" aria-label="Product photos">{images.map((image, index) => <button type="button" key={`${image}-${index}`} className={activeIndex === index ? 'active' : ''} onClick={() => selectImage(index)} aria-label={`Show product image ${index + 1}`} aria-pressed={activeIndex === index}><img src={productImageUrl(image, 220)} alt="" loading="lazy" /></button>)}</div>}
+    {zoomViewer}
   </div>
 }
 
@@ -91,6 +219,8 @@ function CustomerReviews({ productId, reduceMotion, onStatsChange, demoStats }) 
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const [photo, setPhoto] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState('')
+  const [photoOptionsOpen, setPhotoOptionsOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -101,6 +231,16 @@ function CustomerReviews({ productId, reduceMotion, onStatsChange, demoStats }) 
   const barsRef = useRef(null)
   const reviewTriggerRef = useRef(null)
   const reviewDialogRef = useRef(null)
+  const successDoneRef = useRef(null)
+  const photoCameraInputRef = useRef(null)
+  const photoFileInputRef = useRef(null)
+
+  useEffect(() => {
+    if (!photo) { setPhotoPreview(''); return undefined }
+    const previewUrl = URL.createObjectURL(photo)
+    setPhotoPreview(previewUrl)
+    return () => URL.revokeObjectURL(previewUrl)
+  }, [photo])
 
   const getReviews = useCallback(async (offset = 0, signal) => {
     if (!endpoint) return
@@ -161,6 +301,20 @@ function CustomerReviews({ productId, reduceMotion, onStatsChange, demoStats }) 
     }
   }, [formOpen])
 
+  useEffect(() => {
+    if (!submitted) return undefined
+    const frame = requestAnimationFrame(() => successDoneRef.current?.focus({ preventScroll: true }))
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') { event.preventDefault(); setSubmitted(false); setFormOpen(false) }
+      if (event.key === 'Tab') { event.preventDefault(); successDoneRef.current?.focus() }
+    }
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => {
+      cancelAnimationFrame(frame)
+      document.removeEventListener('keydown', onKeyDown, true)
+    }
+  }, [submitted])
+
   const loadedCount = reviews.length + localReviews.length
   const totalCount = Number(summary?.count ?? summary?.totalReviews ?? summary?.reviewCount ?? ((demoStats?.count || 0) + localReviews.length || loadedCount))
   const average = Number(summary?.average ?? summary?.averageRating ?? summary?.avgRating)
@@ -179,10 +333,11 @@ function CustomerReviews({ productId, reduceMotion, onStatsChange, demoStats }) 
     try {
       const fields = { name: name.trim(), rating, comment: comment.trim() }
       if (!endpoint) {
-        const localReview = { id: globalThis.crypto?.randomUUID?.() || `${Date.now()}`, ...fields, createdAt: new Date().toISOString() }
+        const photoUrl = photo ? await compressReviewPhoto(photo) : undefined
+        const localReview = { id: globalThis.crypto?.randomUUID?.() || `${Date.now()}`, ...fields, ...(photoUrl ? { photoUrl } : {}), createdAt: new Date().toISOString() }
         const nextReviews = [localReview, ...localReviews]
-        setLocalReviews(nextReviews)
         window.localStorage.setItem(`tastybites-reviews-${productId}`, JSON.stringify(nextReviews))
+        setLocalReviews(nextReviews)
         setSubmitted(true)
         setFormOpen(false)
         setName('')
@@ -205,9 +360,23 @@ function CustomerReviews({ productId, reduceMotion, onStatsChange, demoStats }) 
       const response = await fetch(endpoint, { method: 'POST', headers, body })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.message || `Your review could not be saved (${response.status}).`)
-      const savedReview = result.review
-      if (savedReview) setReviews((current) => [savedReview, ...current.filter((review) => review.id !== savedReview.id)])
-      if (result.summary) setSummary({ ...result.summary, count: result.summary.count ?? result.total })
+      const savedReview = {
+        id: result.review?.id || globalThis.crypto?.randomUUID?.() || `${Date.now()}`,
+        ...fields,
+        createdAt: new Date().toISOString(),
+        ...(result.review || {}),
+        rating: Number(result.review?.rating ?? fields.rating),
+      }
+      setReviews((current) => [savedReview, ...current.filter((review) => review.id !== savedReview.id)])
+      const serverSummary = result.summary || {}
+      const suppliedCount = Number(serverSummary.count ?? serverSummary.totalReviews ?? result.total)
+      const nextCount = Number.isFinite(suppliedCount) && suppliedCount >= 0 ? suppliedCount : totalCount + 1
+      const suppliedAverage = Number(serverSummary.average ?? serverSummary.averageRating ?? serverSummary.avgRating)
+      const nextAverage = Number.isFinite(suppliedAverage) && suppliedAverage > 0
+        ? suppliedAverage
+        : ((actualAverage * totalCount) + fields.rating) / Math.max(1, totalCount + 1)
+      const nextDistribution = ratingDistribution.map((entry) => ({ ...entry, count: entry.count + (entry.stars === fields.rating ? 1 : 0) }))
+      setSummary({ ...serverSummary, count: nextCount, average: nextAverage, distribution: serverSummary.distribution || serverSummary.ratingDistribution || nextDistribution })
       setSubmitted(true)
       setFormOpen(false)
       setName('')
@@ -239,9 +408,9 @@ function CustomerReviews({ productId, reduceMotion, onStatsChange, demoStats }) 
       </button>
     </div>
 
-    {formOpen && createPortal(<div className="product-review-dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setFormOpen(false) }}>
+    {formOpen && createPortal(<div className="product-review-dialog-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !submitting) setFormOpen(false) }}>
       <form ref={reviewDialogRef} className="product-review-form" role="dialog" aria-modal="true" aria-labelledby="product-review-dialog-title" onSubmit={submitReview}>
-      <div className="product-review-form-heading"><div><strong id="product-review-dialog-title">Write a Review</strong><small>Share your experience with this dish.</small></div><button type="button" onClick={() => setFormOpen(false)} aria-label="Close review form"><X size={19} /></button></div>
+      <div className="product-review-form-heading"><div><strong id="product-review-dialog-title">Write a Review</strong><small>Share your experience with this dish.</small></div><button type="button" onClick={() => { if (!submitting) setFormOpen(false) }} disabled={submitting} aria-label="Close review form"><X size={19} /></button></div>
       {!endpoint && <p className="product-review-form-note">Testing mode: this review is saved on this device only.</p>}
       <label className="product-review-input-label">Customer Name<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" maxLength={80} required disabled={submitting} placeholder="Your name" /></label>
       <fieldset className="product-review-star-picker" disabled={submitting}>
@@ -250,14 +419,30 @@ function CustomerReviews({ productId, reduceMotion, onStatsChange, demoStats }) 
         {!rating && <small>Select a star rating to continue.</small>}
       </fieldset>
       <label className="product-review-input-label">Your review<textarea value={comment} onChange={(event) => setComment(event.target.value)} minLength={3} maxLength={1200} required disabled={submitting} placeholder="What did you enjoy about this dish?" rows={3} /></label>
-      <label className="product-review-photo"><Camera size={16} /><span>{photo ? photo.name : 'Add a food photo (optional)'}</span><input type="file" accept="image/*" onChange={(event) => setPhoto(event.target.files?.[0] || null)} disabled={!endpoint || submitting} /></label>
+      <div className="product-review-photo-picker">
+        <input ref={photoCameraInputRef} className="product-review-photo-input" type="file" accept="image/*" capture="environment" onChange={(event) => { setPhoto(event.target.files?.[0] || null); setPhotoOptionsOpen(false) }} disabled={submitting} />
+        <input ref={photoFileInputRef} className="product-review-photo-input" type="file" accept="image/*" onChange={(event) => { setPhoto(event.target.files?.[0] || null); setPhotoOptionsOpen(false) }} disabled={submitting} />
+        {photo ? <div className="product-review-photo-preview"><img src={photoPreview} alt="Selected food photo preview"/><span title={photo.name}>{photo.name}</span><button type="button" onClick={() => { setPhoto(null); setPhotoOptionsOpen(false); if (photoCameraInputRef.current) photoCameraInputRef.current.value = ''; if (photoFileInputRef.current) photoFileInputRef.current.value = '' }} disabled={submitting} aria-label="Remove selected food photo"><X size={16}/></button></div> : <>
+          <button type="button" className="product-review-photo-trigger" onClick={() => setPhotoOptionsOpen((open) => !open)} aria-expanded={photoOptionsOpen} aria-haspopup="true" disabled={submitting}><Camera size={17}/><span>Add a food photo (optional)</span><ChevronDown size={15}/></button>
+          {photoOptionsOpen && <div className="product-review-photo-options"><button type="button" onClick={() => photoCameraInputRef.current?.click()} disabled={submitting}><Camera size={16}/>Take a photo</button><button type="button" onClick={() => photoFileInputRef.current?.click()} disabled={submitting}><ImagePlus size={16}/>Choose from files</button></div>}
+        </>}
+      </div>
       {submitError && <p className="product-review-submit-error" role="alert">{submitError}</p>}
       <button className="product-review-submit" type="submit" disabled={submitting || !rating || !name.trim() || !comment.trim()}>{submitting ? 'Submitting…' : 'Submit Review'}</button>
       </form>
     </div>, document.body)}
+    {submitted && createPortal(<div className="product-review-success-backdrop">
+      <motion.section className="product-review-success-dialog" role="dialog" aria-modal="true" aria-labelledby="product-review-success-title" aria-describedby="product-review-success-message" initial={reduceMotion ? false : { opacity: 0, scale: .82, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 360, damping: 25, mass: .7 }}>
+        {!reduceMotion && <div className="product-review-confetti" aria-hidden="true">{Array.from({ length: 14 }, (_, index) => <motion.i key={index} style={{ '--confetti-color': ['#20a464', '#ff6a00', '#f0b429', '#4285f4'][index % 4] }} initial={{ opacity: 0, scale: .3, x: 0, y: 0, rotate: 0 }} animate={{ opacity: [0, 1, 0], scale: [.3, 1, .7], x: Math.cos(index / 14 * Math.PI * 2) * (44 + (index % 3) * 8), y: Math.sin(index / 14 * Math.PI * 2) * (42 + (index % 4) * 7), rotate: (index % 2 ? 1 : -1) * (80 + index * 11) }} transition={{ delay: .18, duration: .85, ease: 'easeOut' }} />)}</div>}
+        <motion.div className="product-review-success-icon" initial={reduceMotion ? false : { scale: .45 }} animate={{ scale: 1 }} transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 18, delay: .08 }}>
+          <svg viewBox="0 0 52 52" aria-hidden="true"><motion.path d="M14 27.5 22 35l16-18" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" initial={reduceMotion ? false : { pathLength: 0 }} animate={{ pathLength: 1 }} transition={reduceMotion ? { duration: 0 } : { duration: .42, delay: .2, ease: 'easeOut' }} /></svg>
+        </motion.div>
+        <h3 id="product-review-success-title">Review Submitted Successfully!</h3>
+        <p id="product-review-success-message">Thank you for your feedback! Your review has been submitted successfully.</p>
+        <button ref={successDoneRef} type="button" className="product-review-success-done" onClick={() => { setSubmitted(false); setFormOpen(false) }}>Done</button>
+      </motion.section>
+    </div>, document.body)}
     {!formOpen && <>
-    {submitted && <p className="product-review-success" role="status"><Check size={16} /> Your review was saved successfully.</p>}
-
     <div className="product-review-summary">
       <div className="product-review-average">
         <strong>{actualAverage ? actualAverage.toFixed(1) : '—'}</strong>

@@ -1,5 +1,14 @@
-import { ArrowLeft, ArrowRight, Check, Clock3, CreditCard, Crosshair, FileText, House, MapPin, PackageCheck, Phone, UserRound, Truck } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowLeft, ArrowRight, Check, Clock3, CreditCard, FileText, House, MapPin, PackageCheck, Phone, UserRound, Truck } from 'lucide-react'
 import './DeliveryCheckoutPage.css'
+
+const DELIVERY_DRAFT_KEY = 'tastyBitesDeliveryDraftV1'
+const emptyDeliveryDraft = { fullName: '', phone: '', house: '', street: '', city: '', pincode: '', deliveryNotes: '' }
+
+const readDeliveryDraft = () => {
+  try { return { ...emptyDeliveryDraft, ...JSON.parse(window.sessionStorage.getItem(DELIVERY_DRAFT_KEY) || '{}') } }
+  catch { return emptyDeliveryDraft }
+}
 
 function DeliveryPinIcon() {
   return <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M24 2C13.5 2 5 10.5 5 21c0 14.2 17.1 25.8 17.8 26.3a2 2 0 0 0 2.4 0C25.9 46.8 43 35.2 43 21 43 10.5 34.5 2 24 2Zm0 26a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z" fill="currentColor" fillRule="evenodd" /></svg>
@@ -26,6 +35,14 @@ function DeliveryStepper() {
 }
 
 export default function DeliveryCheckoutPage({ items, itemCount, subtotal, tax, deliveryFee, total, formatMoney, onBack, onPlaceOrder, loading, error }) {
+  const [draft, setDraft] = useState(readDeliveryDraft)
+
+  useEffect(() => {
+    try { window.sessionStorage.setItem(DELIVERY_DRAFT_KEY, JSON.stringify(draft)) } catch { /* Manual entry still works if storage is unavailable. */ }
+  }, [draft])
+
+  const updateDraft = (event) => setDraft((current) => ({ ...current, [event.target.name]: event.target.value }))
+
   const useCurrentLocation = (event) => {
     const form = event.currentTarget.form
     if (!navigator.geolocation) return
@@ -34,7 +51,7 @@ export default function DeliveryCheckoutPage({ items, itemCount, subtotal, tax, 
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coords.latitude}&lon=${coords.longitude}`)
         const result = await response.json()
         const address = result.address || {}
-        const set = (name, value) => { const input = form.elements.namedItem(name); if (input && value) input.value = value }
+        const set = (name, value) => { if (form.elements.namedItem(name) && value) setDraft((current) => ({ ...current, [name]: value })) }
         set('house', [address.house_number, address.building].filter(Boolean).join(', '))
         set('street', [address.suburb, address.neighbourhood, address.road].filter(Boolean).join(', '))
         set('city', address.city || address.town || address.village || address.county || '')
@@ -51,14 +68,14 @@ export default function DeliveryCheckoutPage({ items, itemCount, subtotal, tax, 
           <div className="delivery-panel-heading"><span className="delivery-heading-icon"><DeliveryPinIcon /></span><div><h1 id="delivery-address-title">Delivery Address</h1><p>Where should we bring your order?</p></div><button type="button" className="delivery-location-button" onClick={useCurrentLocation}><LocationCompassIcon /> Use Current Location</button></div>
           <div className="delivery-fields">
             {fields.map(({ name, label, placeholder, icon: Icon, autoComplete, type = 'text' }) => <label className="delivery-field" key={name}>
-              <span>{label} <b>*</b></span><span className="delivery-input-wrap"><Icon size={19} /><input name={name} type={type} placeholder={placeholder} autoComplete={autoComplete} required minLength={name === 'phone' ? 10 : undefined} maxLength={name === 'phone' ? 15 : undefined} pattern={name === 'phone' ? '[+0-9() -]{10,15}' : undefined} /></span>
+              <span>{label} <b>*</b></span><span className="delivery-input-wrap"><Icon size={19} /><input name={name} type={type} placeholder={placeholder} autoComplete={autoComplete} required minLength={name === 'phone' ? 10 : undefined} maxLength={name === 'phone' ? 15 : undefined} pattern={name === 'phone' ? '[+0-9() -]{10,15}' : undefined} value={draft[name]} onChange={updateDraft} /></span>
             </label>)}
-            <label className="delivery-field"><span>City <b>*</b></span><span className="delivery-input-wrap"><House size={19} /><input name="city" placeholder="Enter your city" autoComplete="address-level2" required /></span></label>
-            <label className="delivery-field"><span>Pincode <b>*</b></span><span className="delivery-input-wrap"><PackageCheck size={19} /><input name="pincode" placeholder="6-digit pincode" autoComplete="postal-code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required /></span></label>
+            <label className="delivery-field"><span>City <b>*</b></span><span className="delivery-input-wrap"><House size={19} /><input name="city" placeholder="Enter your city" autoComplete="address-level2" required value={draft.city} onChange={updateDraft} /></span></label>
+            <label className="delivery-field"><span>Pincode <b>*</b></span><span className="delivery-input-wrap"><PackageCheck size={19} /><input name="pincode" placeholder="6-digit pincode" autoComplete="postal-code" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required value={draft.pincode} onChange={updateDraft} /></span></label>
           </div>
         </section>
         <section className="delivery-panel delivery-time-panel" aria-labelledby="delivery-time-title"><div className="delivery-section-title"><Clock3 size={22} /><h2 id="delivery-time-title">Delivery Time</h2></div><label className="delivery-time-option"><input type="radio" name="deliveryTime" value="asap" defaultChecked /><span className="delivery-time-icon"><Truck size={25} /></span><span><strong>ASAP (30–45 mins)</strong><small>Get it as soon as possible</small></span><i><Check size={13} /></i></label>
-          <label className="delivery-field delivery-notes"><span><FileText size={17} /> Delivery Notes <small>(Optional)</small></span><textarea name="deliveryNotes" maxLength={200} placeholder="e.g. Gate no. 2, near park, call before delivery…" /></label>
+          <label className="delivery-field delivery-notes"><span><FileText size={17} /> Delivery Notes <small>(Optional)</small></span><textarea name="deliveryNotes" maxLength={200} placeholder="e.g. Gate no. 2, near park, call before delivery…" value={draft.deliveryNotes} onChange={updateDraft} /></label>
         </section>
         {error && <p className="delivery-error" role="alert">{error}</p>}
         <button className="delivery-submit mobile-submit" disabled={loading || !itemCount}>{loading ? 'Placing order…' : <>Place Order <ArrowRight size={21} /></>}</button>
